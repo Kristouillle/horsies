@@ -4,6 +4,22 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Join Lobby - Horse Race</title>
     <style>
+      @font-face {
+        font-family: 'Schoolbell';
+        src: url('/public/fonts/Schoolbell-Regular.ttf') format('truetype');
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+        background-image: url('/public/menus/bg.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        font-family: 'Schoolbell', cursive;
+      }
+
       .lobby-buttons {
         position: absolute;
         top: 50%;
@@ -13,14 +29,19 @@
       }
 
       .button {
+        background-color: transparent;
+        background-image: url('/public/menus/buttonsimple.png');
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
         display: block;
         margin: 10px auto;
         padding: 15px 30px;
+        font-family: 'Schoolbell', cursive;
         font-size: 18px;
         cursor: pointer;
         border: none;
         border-radius: 5px;
-        background: #4CAF50;
         color: white;
         width: 200px;
       }
@@ -33,15 +54,28 @@
       #horse-buttons {
         margin-top: 20px;
       }
+
+      .action-image {
+        width: 200px;
+        height: 100px;
+        cursor: pointer;
+        margin: 10px;
+        border-radius: 5px;
+        transition: transform 0.2s;
+      }
+      
+      .action-image:hover {
+        transform: scale(1.1);
+      }
     </style>
   </head>
   <body>
     <button id="home-btn" class="button">Home</button>
     <div class="lobby-buttons">
       <div id="action-text">
-        <button id="btn1" class="button">Action 1</button>
-        <button id="btn2" class="button">Action 2</button>
-        <button id="btn3" class="button">Action 3</button>
+        <img src="/public/menus/stim.png" class="action-image" data-action="Action 1" alt="Action 1">
+        <img src="/public/menus/sabotage.png" class="action-image" data-action="Action 2" alt="Action 2">
+        <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
       </div>
       <div id="horse-buttons" style="display: none;"></div>
     </div>
@@ -62,11 +96,11 @@
         horseNames = names;
       });
 
-      // Action buttons
-      const buttons = document.querySelectorAll('.button');
-      buttons.forEach((button) => {
-        button.addEventListener('click', () => {
-          selectedAction = button.textContent;
+      // Action images
+      const images = document.querySelectorAll('.action-image');
+      images.forEach((image) => {
+        image.addEventListener('click', () => {
+          selectedAction = image.dataset.action;
           socket.emit('button pressed', selectedAction);
           actionText.textContent = `Selected: ${selectedAction}`;
           showHorseButtons();
@@ -98,17 +132,17 @@
         backbutton.addEventListener('click', () => {
           horseButtons.style.display = 'none';
           actionText.innerHTML = `
-            <button id="btn1" class="button">Action 1</button>
-            <button id="btn2" class="button">Action 2</button>
-            <button id="btn3" class="button">Action 3</button>
+            <img src="/public/menus/stim.png" class="action-image" data-action="Action 1" alt="Action 1">
+            <img src="/public/menus/sabotage.png" class="action-image" data-action="Action 2" alt="Action 2">
+            <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
           `;
           selectedAction = '';
           
-          // Reattach event listeners to the new action buttons
-          const newButtons = actionText.querySelectorAll('.button');
-          newButtons.forEach((button) => {
-            button.addEventListener('click', () => {
-              selectedAction = button.textContent;
+          // Reattach event listeners to the new action images
+          const newImages = actionText.querySelectorAll('.action-image');
+          newImages.forEach((image) => {
+            image.addEventListener('click', () => {
+              selectedAction = image.dataset.action;
               socket.emit('button pressed', selectedAction);
               actionText.textContent = `Selected: ${selectedAction}`;
               showHorseButtons();
