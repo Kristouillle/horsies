@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Join Lobby - Horse Race</title>
+    <style>
+      .lobby-buttons {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+      }
+
+      .button {
+        display: block;
+        margin: 10px auto;
+        padding: 15px 30px;
+        font-size: 18px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background: #4CAF50;
+        color: white;
+        width: 200px;
+      }
+
+      #action-text {
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      
+      #horse-buttons {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="lobby-buttons">
+      <div id="action-text">
+        <button id="btn1" class="button">Action 1</button>
+        <button id="btn2" class="button">Action 2</button>
+        <button id="btn3" class="button">Action 3</button>
+      </div>
+      <div id="horse-buttons" style="display: none;"></div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+      const actionText = document.getElementById('action-text');
+      const horseButtons = document.getElementById('horse-buttons');
+
+      let selectedAction = '';
+      let horseNames = [];
+
+      // Request horse names when page loads
+      socket.emit('request horse names');
+
+      // Store horse names when received
+      socket.on('horse names', (names) => {
+        horseNames = names;
+      });
+
+      // Action buttons
+      const buttons = document.querySelectorAll('.button');
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          selectedAction = button.textContent;
+          socket.emit('button pressed', selectedAction);
+          actionText.textContent = `Selected: ${selectedAction}`;
+          showHorseButtons();
+        });
+      });
+
+      function showHorseButtons() {
+        horseButtons.style.display = 'block';
+        horseButtons.innerHTML = '';
+        horseNames.forEach(name => {
+          const button = document.createElement('button');
+          button.className = 'button';
+          button.textContent = name;
+          button.addEventListener('click', () => {
+            const actionMessage = `${selectedAction} on ${name}`;
+            socket.emit('horse selected', {
+              horse: name,
+              action: selectedAction,
+              fullMessage: actionMessage
+            });
+            socket.emit('button pressed', actionMessage);
+          });
+          horseButtons.appendChild(button);
+        });
+        
+        const backbutton = document.createElement('button');
+        backbutton.className = 'button';
+        backbutton.textContent = "Back";
+        backbutton.addEventListener('click', () => {
+          horseButtons.style.display = 'none';
+          actionText.innerHTML = `
+            <button id="btn1" class="button">Action 1</button>
+            <button id="btn2" class="button">Action 2</button>
+            <button id="btn3" class="button">Action 3</button>
+          `;
+          selectedAction = '';
+          
+          // Reattach event listeners to the new action buttons
+          const newButtons = actionText.querySelectorAll('.button');
+          newButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+              selectedAction = button.textContent;
+              socket.emit('button pressed', selectedAction);
+              actionText.textContent = `Selected: ${selectedAction}`;
+              showHorseButtons();
+            });
+          });
+        });
+        horseButtons.appendChild(backbutton);
+      }
+    </script>
+  </body>
+</html>

@@ -1,6 +1,17 @@
 let currentGameLoop = null;
+let app;
+let actionText;
+let socket;
 
-export async function setupRace(app, horseCount) {
+
+export async function setupRace(pixiApp, horseCount) {
+    app = pixiApp;
+    socket = io();
+    
+    socket.on('display text', (buttonText) => {
+        handleAction(buttonText);
+    });
+    
     try {
         // Load horse configurations
         const horseConfigs = await fetch('/public/data/horses.json').then(r => r.json());
@@ -64,6 +75,11 @@ export async function setupRace(app, horseCount) {
             horses.push(horse);
         }
         
+        // After creating horses, emit their names
+        const horseNames = horses.map(horse => horse.name);
+        socket.emit('horse names', horseNames);
+        socket.emit('race setup', horseNames); // Add this line to store horses in server
+        
         // Show race button after setup
         const raceControls = document.getElementById('race-controls');
         raceControls.classList.remove('hidden');
@@ -72,6 +88,20 @@ export async function setupRace(app, horseCount) {
         const raceBtn = document.getElementById('race-btn');
         raceBtn.addEventListener('click', () => startRace(horses, app));
         
+        // Create action text last to ensure it's on top
+        actionText = new PIXI.Text('', {
+            fontFamily: 'Arial',
+            fontSize: 64,
+            fill: 0xffffff,
+            stroke: { color: 0x000000, width: 4 }, // Add stroke for better visibility
+            align: 'center'
+        });
+        actionText.position.set(app.screen.width / 2, app.screen.height / 2);
+        actionText.anchor.set(0.5);
+        actionText.zIndex = 1000; // Ensure high z-index
+        app.stage.sortableChildren = true; // Enable z-index sorting
+        app.stage.addChild(actionText);
+
         return horses;
     } catch (error) {
         console.error('Setup race failed:', error);
@@ -189,4 +219,14 @@ function resetRace(horses) {
         horse.visible = true;
         horse.speedText.text = 'Speed: 0';
     });
+}
+
+export function handleAction(buttonText) {
+    actionText.text = buttonText;
+    actionText.alpha = 1; // Ensure full opacity
+    
+    // Fade out animation
+    setTimeout(() => {
+        actionText.text = '';
+    }, 1000);
 }

@@ -10,6 +10,9 @@ const io = new Server(server);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+let currentRaceHorses = [];
+let isLobbyActive = false;  // Add this line
+
 app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'index.html'));
 });
@@ -21,15 +24,70 @@ app.use('/public/scripts', express.static('src/scripts'));
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+  
+  // Send initial lobby status to new connections
+  socket.emit('lobby status', isLobbyActive);
+
+  socket.on('create lobby', () => {
+    isLobbyActive = true;
+    io.emit('lobby status', isLobbyActive);
+  });
+
+  socket.on('close lobby', () => {
+    isLobbyActive = false;
+    io.emit('lobby status', isLobbyActive);
+  });
+  
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
-});
 
-io.on('connection', (socket) => {
-  socket.on('chat message', (msg) => {
-    console.log('message: ' + msg);
+  socket.on('join lobby', () => {
+    console.log('Player joined lobby');
+    socket.join('lobby');
+    socket.emit('lobby joined');
   });
+
+  socket.on('leave lobby', () => {
+    console.log('Player left lobby');
+    socket.leave('lobby');
+  });
+
+  socket.on('player ready', () => {
+    console.log('Player ready');
+    socket.to('lobby').emit('player ready update');
+  });
+
+  socket.on('start game', () => {
+    console.log('Game starting');
+    io.to('lobby').emit('game start');
+  });
+
+  socket.on('button pressed', (buttonText) => {
+    console.log('Button pressed:', buttonText);
+    io.emit('display text', buttonText);
+  });
+
+  socket.on('horse names', (names) => {
+    console.log('Horse names received:', names);
+    io.emit('show horse options', names);  // Changed to emit show horse options instead
+  });
+
+  socket.on('race setup', (horses) => {
+    console.log('Race horses set:', horses);
+    currentRaceHorses = horses;
+  });
+
+  socket.on('request horse names', () => {
+    console.log('Sending horse names:', currentRaceHorses);
+    socket.emit('horse names', currentRaceHorses);
+  });
+
+  socket.on('horse selected', (data) => {
+    console.log('Horse selected:', data);
+    io.emit('display text', data.fullMessage);
+  });
+
 });
 
 server.listen(3000, () => {
