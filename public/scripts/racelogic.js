@@ -1,69 +1,82 @@
 let currentGameLoop = null;
 
 export async function setupRace(app, horseCount) {
-    // Load horse configurations
-    const horseConfigs = await fetch('/public/data/horses.json').then(r => r.json());
-    
-    // Load background
-    await PIXI.Assets.load('/public/env/sand.png');
-    const bg = PIXI.Sprite.from('/public/env/sand.png');
-    bg.width = app.screen.width;
-    bg.height = app.screen.height;
-    app.stage.addChild(bg);
-    
-    // Load horse sprites
-    const uniqueSpritePaths = [...new Set(horseConfigs.horses.map(h => h.spritePath))];
-    await Promise.all(uniqueSpritePaths.map(path => PIXI.Assets.load(path)));
-    
-    // Calculate spacing
-    const verticalSpacing = app.screen.height / (horseCount + 2);
-    
-    // Create horses
-    const horses = [];
-    for (let i = 0; i < horseCount; i++) {
-        const config = horseConfigs.horses[i % horseConfigs.horses.length];
-        const horse = PIXI.Sprite.from(config.spritePath);
-        horse.anchor.set(0.5); // Set anchor point to center
-        horse.x = 50 + horse.width/2; // Adjust initial position to account for anchor
-        horse.y = verticalSpacing * (i + 1);
-        horse.scale.set(0.5);
+    try {
+        // Load horse configurations
+        const horseConfigs = await fetch('/public/data/horses.json').then(r => r.json());
         
-        const speedText = new PIXI.Text({
-            text: `${config.name} - Speed: 0`,
-            style: {
-                fontFamily: 'Arial',
-                fontSize: 14,
-                fill: 0xFFFFFF,
-                stroke: {
-                    color: 0x000000,
-                    width: 4
-                }
+        // Load background
+        await PIXI.Assets.load('/public/env/sand.png');
+        const bg = PIXI.Sprite.from('/public/env/sand.png');
+        bg.width = app.screen.width;
+        bg.height = app.screen.height;
+        app.stage.addChild(bg);
+        
+        // Load horse textures first
+        const textures = {};
+        for (const path of new Set(horseConfigs.horses.map(h => h.spritePath))) {
+            try {
+                textures[path] = await PIXI.Assets.load(path);
+                console.log('Loaded texture:', path);
+            } catch (error) {
+                console.error('Failed to load texture:', path, error);
+                throw error;
             }
-        });
+        }
         
-        speedText.x = horse.x + horse.width + 10;
-        speedText.y = horse.y + 10;
+        // Calculate spacing
+        const verticalSpacing = app.screen.height / (horseCount + 2);
         
-        horse.speedText = speedText;
-        horse.visible = true;
-        horse.name = config.name;
-        horse.behavior = config.behavior;
-        horse.personality = config.personality;
+        // Create horses
+        const horses = [];
+        for (let i = 0; i < horseCount; i++) {
+            const config = horseConfigs.horses[i % horseConfigs.horses.length];
+            const horse = new PIXI.Sprite(textures[config.spritePath]);
+            horse.anchor.set(0.5); // Set anchor point to center
+            horse.x = 50 + horse.width/2; // Adjust initial position to account for anchor
+            horse.y = verticalSpacing * (i + 1);
+            horse.scale.set(0.5);
+            
+            const speedText = new PIXI.Text({
+                text: `${config.name} - Speed: 0`,
+                style: {
+                    fontFamily: 'Arial',
+                    fontSize: 14,
+                    fill: 0xFFFFFF,
+                    stroke: {
+                        color: 0x000000,
+                        width: 4
+                    }
+                }
+            });
+            
+            speedText.x = horse.x + horse.width + 10;
+            speedText.y = horse.y + 10;
+            
+            horse.speedText = speedText;
+            horse.visible = true;
+            horse.name = config.name;
+            horse.behavior = config.behavior;
+            horse.personality = config.personality;
+            
+            app.stage.addChild(horse);
+            app.stage.addChild(speedText);
+            horses.push(horse);
+        }
         
-        app.stage.addChild(horse);
-        app.stage.addChild(speedText);
-        horses.push(horse);
+        // Show race button after setup
+        const raceControls = document.getElementById('race-controls');
+        raceControls.classList.remove('hidden');
+        
+        // Setup race button click handler
+        const raceBtn = document.getElementById('race-btn');
+        raceBtn.addEventListener('click', () => startRace(horses, app));
+        
+        return horses;
+    } catch (error) {
+        console.error('Setup race failed:', error);
+        throw error;
     }
-    
-    // Show race button after setup
-    const raceControls = document.getElementById('race-controls');
-    raceControls.classList.remove('hidden');
-    
-    // Setup race button click handler
-    const raceBtn = document.getElementById('race-btn');
-    raceBtn.addEventListener('click', () => startRace(horses, app));
-    
-    return horses;
 }
 
 function startRace(horses, app) {
@@ -76,7 +89,7 @@ function startRace(horses, app) {
         app.ticker.remove(currentGameLoop);
     }
     
-    const finishLine = app.screen.width - 150; // Adjusted finish line
+    const finishLine = app.screen.width - 300; // Adjusted finish line
     let winner = false;
     let lastTime = performance.now();
     
@@ -126,7 +139,7 @@ function startRace(horses, app) {
             
             if (horse.x >= finishLine && !winner) {
                 winner = true;
-                console.log(`Winner found: Horse #${index + 1}`);  // Debug log
+                console.log(`Winner found: Horse #${index + 1}`);
                 announceWinner(horse, index + 1);
                 raceBtn.disabled = false;
                 resetRace(horses);
@@ -134,7 +147,7 @@ function startRace(horses, app) {
         });
     };
     
-    console.log('Adding ticker...');  // Debug log
+    console.log('Adding ticker...');
     app.ticker.add(currentGameLoop);
 }
 
@@ -168,12 +181,12 @@ function announceWinner(horse, horseNumber) {
 }
 
 function resetRace(horses) {
-    console.log('Resetting race...');  // Debug log
+    console.log('Resetting race...');
     horses.forEach(horse => {
         horse.x = 50;
         horse.speedText.x = horse.x + horse.width + 10;
         horse.speed = 0;
-        horse.visible = true; // Ensure visibility after reset
+        horse.visible = true;
         horse.speedText.text = 'Speed: 0';
     });
 }

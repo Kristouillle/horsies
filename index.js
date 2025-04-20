@@ -16,9 +16,8 @@ app.get('/', (req, res) => {
 
 // Serve static files from the 'public' directory
 app.use('/public', express.static('public'));
+app.use('/', express.static('public')); // Add this line to serve files from root path
 app.use('/public/scripts', express.static('src/scripts'));
-
-
 
 io.on('connection', (socket) => {
   console.log('a user connected');

@@ -2,7 +2,7 @@
   "horses": [
     {
       "name": "Thunder Dash",
-      "spritePath": "/public/horses/horse.png",
+      "spritePath": "/public/horses/brownhorse.png",
       "behavior": "sprinter",
       "personality": {
         "acceleration": 1.1,
@@ -13,7 +13,7 @@
     },
     {
       "name": "Steady Star",
-      "spritePath": "/public/horses/horse.png",
+      "spritePath": "/public/horses/whitehorse.png",
       "behavior": "steady",
       "personality": {
         "acceleration": 0.95,
@@ -24,7 +24,7 @@
     },
     {
       "name": "Final Sprint",
-      "spritePath": "/public/horses/horse.png",
+      "spritePath": "/public/horses/brownhorse.png",
       "behavior": "finisher",
       "personality": {
         "acceleration": 1.2,
@@ -35,7 +35,7 @@
     },
     {
       "name": "Early Bird",
-      "spritePath": "/public/horses/horse.png",
+      "spritePath": "/public/horses/whitehorse.png",
       "behavior": "frontrunner",
       "personality": {
         "acceleration": 1.15,

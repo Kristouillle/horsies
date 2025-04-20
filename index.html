@@ -4,33 +4,96 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Horse Race</title>
     <style>
-      #race-setup {
+      .lobby-buttons {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         text-align: center;
-        margin-top: 20px;
       }
+
+      .lobby-menu {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      .button {
+        display: block;
+        margin: 10px auto;
+        padding: 15px 30px;
+        font-size: 18px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background: #4CAF50;
+        color: white;
+        width: 200px;
+      }
+
       .hidden {
         display: none;
       }
-      #race-controls {
-        text-align: center;
-        margin-top: 10px;
+
+      canvas {
+        display: block;
+        margin: 0 auto;
       }
-      #race-btn {
-        padding: 10px 20px;
-        font-size: 16px;
-        cursor: pointer;
+
+      .slider-menu {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        border-radius: 10px;
+      }
+
+      .slider-container {
+        margin: 20px 0;
+      }
+
+      #player-count {
+        width: 180px;
+      }
+
+      #player-value {
+        margin: 10px 0;
+        font-size: 18px;
       }
     </style>
   </head>
   <body>
-    <div id="race-setup">
-      <label for="horse-count">Number of Horses (4-10):</label>
-      <input type="number" id="horse-count" min="4" max="10" value="4">
-      <button id="ready-btn">Ready!</button>
+    <div id="lobby-buttons" class="lobby-buttons">
+      <button id="create-lobby" class="button">Create Lobby</button>
+      <button id="join-lobby" class="button">Join Lobby</button>
     </div>
-      <div id="race-controls" class="hidden">
-        <button id="race-btn">Race!</button>
+
+    <div id="create-menu" class="lobby-menu hidden">
+      <button id="public-game" class="button">Public Game</button>
+      <button id="private-game" class="button">Private Game</button>
+      <button id="back-button" class="button">Back</button>
+    </div>
+
+    <div id="slider-menu" class="slider-menu hidden">
+      <div class="slider-container">
+        <div id="player-value">Players: 4</div>
+        <input type="range" id="player-count" min="4" max="12" value="4">
       </div>
+      <button id="start-public-game" class="button">Start Game</button>
+      <button id="back-to-create" class="button">Back</button>
+    </div>
+
+    <div id="race-controls" class="hidden">
+      <button id="race-btn">Race!</button>
+    </div>
     
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://pixijs.download/release/pixi.js"></script>
@@ -38,20 +101,56 @@
       import { setupRace } from '/public/scripts/racelogic.js';
       
       const app = new PIXI.Application();
-      await app.init({ width: 1600, height: 560 }); // Increased width
+      await app.init({ width: 1600, height: 900 });
       document.body.appendChild(app.canvas);
       
-      const raceSetup = document.getElementById('race-setup');
-      const horseCount = document.getElementById('horse-count');
-      const readyBtn = document.getElementById('ready-btn');
-      
-      readyBtn.addEventListener('click', () => {
-        const count = parseInt(horseCount.value);
-        if (count >= 4 && count <= 10) {
-            raceSetup.classList.add('hidden');
-            setupRace(app, count);
-        }
-    });
+      const lobbyButtons = document.getElementById('lobby-buttons');
+      const createMenu = document.getElementById('create-menu');
+      const createLobby = document.getElementById('create-lobby');
+      const backButton = document.getElementById('back-button');
+      const sliderMenu = document.getElementById('slider-menu');
+      const playerCount = document.getElementById('player-count');
+      const playerValue = document.getElementById('player-value');
+      const backToCreate = document.getElementById('back-to-create');
+
+      createLobby.addEventListener('click', () => {
+        lobbyButtons.classList.add('hidden');
+        createMenu.classList.remove('hidden');
+      });
+
+      backButton.addEventListener('click', () => {
+        createMenu.classList.add('hidden');
+        lobbyButtons.classList.remove('hidden');
+      });
+
+      // Game type button handlers
+      document.getElementById('public-game').addEventListener('click', () => {
+        createMenu.classList.add('hidden');
+        sliderMenu.classList.remove('hidden');
+      });
+
+      playerCount.addEventListener('input', () => {
+        playerValue.textContent = `Players: ${playerCount.value}`;
+      });
+
+      backToCreate.addEventListener('click', () => {
+        sliderMenu.classList.add('hidden');
+        createMenu.classList.remove('hidden');
+      });
+
+      document.getElementById('start-public-game').addEventListener('click', () => {
+        sliderMenu.classList.add('hidden');
+        setupRace(app, parseInt(playerCount.value));
+      });
+
+      // TODO: Implement public and private game handlers
+      document.getElementById('private-game').addEventListener('click', () => {
+        alert('Join lobby feature coming soon!');
+      });
+
+      document.getElementById('join-lobby').addEventListener('click', () => {
+        alert('Join lobby feature coming soon!');
+      });
     </script>
   </body>
 </html>
