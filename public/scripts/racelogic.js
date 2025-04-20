@@ -39,6 +39,9 @@ export async function setupRace(pixiApp, horseCount) {
         const verticalSpacing = app.screen.height / (horseCount + 2);
         
         // Create horses
+        const BEHAVIORS = ['steady', 'sprinter', 'finisher', 'frontrunner'];
+        const getRandomBehavior = () => BEHAVIORS[Math.floor(Math.random() * BEHAVIORS.length)];
+
         const horses = [];
         for (let i = 0; i < horseCount; i++) {
             const config = horseConfigs.horses[i % horseConfigs.horses.length];
@@ -67,7 +70,7 @@ export async function setupRace(pixiApp, horseCount) {
             horse.speedText = speedText;
             horse.visible = true;
             horse.name = config.name;
-            horse.behavior = config.behavior;
+            horse.behavior = config.behavior || getRandomBehavior(); // Assign random behavior if none provided
             horse.personality = config.personality;
             
             app.stage.addChild(horse);
