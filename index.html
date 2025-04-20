@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Horse Race</title>
+    <style>
+      #race-setup {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .hidden {
+        display: none;
+      }
+      #race-controls {
+        text-align: center;
+        margin-top: 10px;
+      }
+      #race-btn {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="race-setup">
+      <label for="horse-count">Number of Horses (4-10):</label>
+      <input type="number" id="horse-count" min="4" max="10" value="4">
+      <button id="ready-btn">Ready!</button>
+    </div>
+      <div id="race-controls" class="hidden">
+        <button id="race-btn">Race!</button>
+      </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://pixijs.download/release/pixi.js"></script>
+    <script type="module">
+      import { setupRace } from '/public/scripts/racelogic.js';
+      
+      const app = new PIXI.Application();
+      await app.init({ width: 1600, height: 560 }); // Increased width
+      document.body.appendChild(app.canvas);
+      
+      const raceSetup = document.getElementById('race-setup');
+      const horseCount = document.getElementById('horse-count');
+      const readyBtn = document.getElementById('ready-btn');
+      
+      readyBtn.addEventListener('click', () => {
+        const count = parseInt(horseCount.value);
+        if (count >= 4 && count <= 10) {
+            raceSetup.classList.add('hidden');
+            setupRace(app, count);
+        }
+    });
+    </script>
+  </body>
+</html>

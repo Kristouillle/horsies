@@ -1,0 +1,48 @@
+{
+  "horses": [
+    {
+      "name": "Thunder Dash",
+      "spritePath": "/public/horses/horse.png",
+      "behavior": "sprinter",
+      "personality": {
+        "acceleration": 1.1,
+        "consistency": 0.85,
+        "burstChance": 0.98,
+        "stamina": 0.9
+      }
+    },
+    {
+      "name": "Steady Star",
+      "spritePath": "/public/horses/horse.png",
+      "behavior": "steady",
+      "personality": {
+        "acceleration": 0.95,
+        "consistency": 1.15,
+        "burstChance": 0.97,
+        "stamina": 1.1
+      }
+    },
+    {
+      "name": "Final Sprint",
+      "spritePath": "/public/horses/horse.png",
+      "behavior": "finisher",
+      "personality": {
+        "acceleration": 1.2,
+        "consistency": 0.9,
+        "burstChance": 0.98,
+        "stamina": 1.0
+      }
+    },
+    {
+      "name": "Early Bird",
+      "spritePath": "/public/horses/horse.png",
+      "behavior": "frontrunner",
+      "personality": {
+        "acceleration": 1.15,
+        "consistency": 0.95,
+        "burstChance": 0.97,
+        "stamina": 0.85
+      }
+    }
+  ]
+}
