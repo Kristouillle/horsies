@@ -22,21 +22,21 @@ A browser-based multiplayer horse racing simulator built with **PixiJS**, **Java
 
 ### ✅ Must-Have (MVP)
 
-- [ ] Create a single race lobby on game start
-- [ ] PixiJS-powered race scene using HTML5 canvas
-- [ ] Simple 2D horses with basic animation or sprites
-- [ ] UI to select number of horses (e.g., 4–10)
+- [x] Create a single race lobby on game start
+- [x] PixiJS-powered race scene using HTML5 canvas
+- [x] Simple 2D horses with basic animation or sprites
+- [x] UI to select number of horses (e.g., 4–10)
 - [ ] Display randomized horse odds
-- [ ] Basic race simulation logic
+- [x] Basic race simulation logic
 - [ ] Race outcome screen
 
 ### 💡 Nice-to-Have (Future)
 
-- [ ] WebSocket connection via Socket.io for real-time player input
-- [ ] Player join flow (via mobile)
+- [x] WebSocket connection via Socket.io for real-time player input
+- [x] Player join flow (via mobile)
 - [ ] 1-minute countdown action phase
 - [ ] Stim and sabotage mechanics (with success/failure logic)
-- [ ] Add lobby selection: "Create Lobby" / "Join Lobby"
+- [x] Add lobby selection: "Create Lobby" / "Join Lobby"
 - [ ] Multiple concurrent race lobbies
 - [ ] Visual effects for stims, sabotage
 - [ ] Leaderboards or player history
@@ -72,11 +72,11 @@ A browser-based multiplayer horse racing simulator built with **PixiJS**, **Java
 
 | Task                                  | Status      |
 | ------------------------------------- | ----------- |
-| Initialize project & server setup     | ⬜️ Pending |
-| Create canvas & setup PixiJS scene    | ⬜️ Pending |
+| Initialize project & server setup     | ✅ Done |
+| Create canvas & setup PixiJS scene    | ✅ Done |
 | Draw & animate simple horses          | ⬜️ Pending |
-| Add number-of-horses selection screen | ⬜️ Pending |
-| Simulate and render race              | ⬜️ Pending |
+| Add number-of-horses selection screen | ✅ Done |
+| Simulate and render race              | 🟨 In the works |
 | Display results screen                | ⬜️ Pending |
 | Deploy on KSHTech servers             | ⬜️ Pending |
 
@@ -84,8 +84,8 @@ A browser-based multiplayer horse racing simulator built with **PixiJS**, **Java
 
 | Task                               | Status      |
 | ---------------------------------- | ----------- |
-| Setup Socket.io connection         | ⬜️ Pending |
-| Allow phone join via lobby code    | ⬜️ Pending |
+| Setup Socket.io connection         | ✅ Done |
+| Allow phone join via lobby code    | 🟨 In the works |
 | Add stim/sabotage logic            | ⬜️ Pending |
 | Mobile responsiveness & UI testing | ⬜️ Pending |
 
