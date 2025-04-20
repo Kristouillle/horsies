@@ -1,12 +1,103 @@
-# React + Vite
+# 🐎 Horse Racing Simulator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A browser-based multiplayer horse racing simulator built with **PixiJS**, **JavaScript**, and eventually **Socket.io**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🎮 Gameplay Loop
 
-## Expanding the ESLint configuration
+1. **Create Lobby** – Launch the game server, and a single lobby is created (support for multiple lobbies is planned).
+2. **Choose Number of Horses** – User selects how many horses will participate in the race.
+3. **Join the Game** – Players connect via their mobile phones using a code or a shared link.
+4. **Action Phase (1 minute)** – Players use their limited coins to perform actions like:
+   - 🐎 Stim their horse (boost performance with risk of disqualification)
+   - ⚠️ Sabotage an opponent's horse (e.g., slow them down)
+   - 🔍 View horse odds (each horse has randomized odds)
+5. **Race Plays Out** – The animated race is rendered in canvas using PixiJS, based on the internal simulation logic and any in-game actions.
+6. **Results** – Winners are announced. Betting mechanics (if any) are handled externally.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## ✨ Features
+
+### ✅ Must-Have (MVP)
+
+- [ ] Create a single race lobby on game start
+- [ ] PixiJS-powered race scene using HTML5 canvas
+- [ ] Simple 2D horses with basic animation or sprites
+- [ ] UI to select number of horses (e.g., 4–10)
+- [ ] Display randomized horse odds
+- [ ] Basic race simulation logic
+- [ ] Race outcome screen
+
+### 💡 Nice-to-Have (Future)
+
+- [ ] WebSocket connection via Socket.io for real-time player input
+- [ ] Player join flow (via mobile)
+- [ ] 1-minute countdown action phase
+- [ ] Stim and sabotage mechanics (with success/failure logic)
+- [ ] Add lobby selection: "Create Lobby" / "Join Lobby"
+- [ ] Multiple concurrent race lobbies
+- [ ] Visual effects for stims, sabotage
+- [ ] Leaderboards or player history
+- [ ] Enhanced horse animations or art
+- [ ] Sound effects and music
+- [ ] Funny horses names and sprites
+
+---
+
+## 🛠️ Technologies
+
+| Tech           | Description                           |
+| -------------- | ------------------------------------- |
+| **PixiJS**     | 2D rendering library for race visuals |
+| **JavaScript** | Game logic and interaction            |
+| **Socket.io**  | Real-time multiplayer via WebSockets  |
+| **HTML/CSS**   | Frontend UI for configuration screens |
+| **Spine**      | Bone based animation library          |
+
+---
+
+## 🖼️ Art & Assets
+
+- Simple 2D horses (drawn manually or using basic sprites)
+- Background track and finish line
+- UI components: lobby selector, countdown timer, action buttons
+
+---
+
+## 🧠 Development Timeline
+
+### Phase 1: MVP (Must-Haves) – **1-2 days**
+
+| Task                                  | Status      |
+| ------------------------------------- | ----------- |
+| Initialize project & server setup     | ⬜️ Pending |
+| Create canvas & setup PixiJS scene    | ⬜️ Pending |
+| Draw & animate simple horses          | ⬜️ Pending |
+| Add number-of-horses selection screen | ⬜️ Pending |
+| Simulate and render race              | ⬜️ Pending |
+| Display results screen                | ⬜️ Pending |
+| Deploy on KSHTech servers             | ⬜️ Pending |
+
+### Phase 2: Make it fun – **Rest of time**
+
+| Task                               | Status      |
+| ---------------------------------- | ----------- |
+| Setup Socket.io connection         | ⬜️ Pending |
+| Allow phone join via lobby code    | ⬜️ Pending |
+| Add stim/sabotage logic            | ⬜️ Pending |
+| Mobile responsiveness & UI testing | ⬜️ Pending |
+
+### Phase 3: Polish (the verb not the nationality) – **If we feel like it**
+
+| Task                              | Status      |
+| --------------------------------- | ----------- |
+| Multiple lobby system             | ⬜️ Pending |
+| Enhanced animations & effects     | ⬜️ Pending |
+| Lobby/player UI polish            | ⬜️ Pending |
+| Visual feedback for stim/sabotage | ⬜️ Pending |
+
+---
+
+## 📂 Project Structure (Planned)
