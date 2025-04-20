@@ -4,6 +4,21 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Horse Race - Lobby</title>
     <style>
+      @font-face {
+        font-family: 'Schoolbell';
+        src: url('/public/fonts/Schoolbell-Regular.ttf') format('truetype');
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-image: url('/public/menus/bg.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+      }
+
       .lobby-buttons {
         position: absolute;
         top: 50%;
@@ -18,22 +33,24 @@
         left: 50%;
         transform: translate(-50%, -50%);
         text-align: center;
-        background: rgba(255, 255, 255, 0.9);
         padding: 20px;
         border-radius: 10px;
       }
 
       .button {
+        background-color: transparent;
+        background-image: url('/public/menus/button.png');
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
         display: block;
         margin: 10px auto;
         padding: 15px 30px;
-        font-size: 18px;
+        font-size: 36px;
+        font-family: 'Schoolbell', cursive;
         cursor: pointer;
         border: none;
-        border-radius: 5px;
-        background: #4CAF50;
         color: white;
-        width: 200px;
       }
 
       .button:disabled {
@@ -51,13 +68,13 @@
         margin: 0 auto;
       }
 
+
       .slider-menu {
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
         text-align: center;
-        background: rgba(255, 255, 255, 0.9);
         padding: 20px;
         border-radius: 10px;
       }
@@ -72,14 +89,22 @@
 
       #player-value {
         margin: 10px 0;
-        font-size: 18px;
+        font-family: 'Schoolbell', cursive;
+        font-size: 36px;
+      }
+
+      .lobby-button-img {
+        cursor: pointer;
+        display: block;
+        margin: 10px auto;
+        width: 300px;
       }
     </style>
   </head>
   <body>
     <div id="lobby-buttons" class="lobby-buttons">
-      <button id="create-lobby" class="button">Create Lobby</button>
-      <button id="join-lobby" class="button">Join Lobby</button>
+      <img id="create-lobby" src="/public/menus/createlobby.png" class="lobby-button-img" alt="Create Lobby">
+      <img id="join-lobby" src="/public/menus/joinlobby.png" class="lobby-button-img" alt="Join Lobby">
     </div>
 
     <div id="create-menu" class="lobby-menu hidden">
@@ -90,7 +115,7 @@
 
     <div id="slider-menu" class="slider-menu hidden">
       <div class="slider-container">
-        <div id="player-value">Players: 4</div>
+        <div id="player-value" class="slider-header">Players: 4</div>
         <input type="range" id="player-count" min="4" max="12" value="4">
       </div>
       <button id="start-public-game" class="button">Start Game</button>
@@ -142,7 +167,8 @@
       });
 
       socket.on('lobby status', (isActive) => {
-        joinLobbyBtn.disabled = !isActive;
+        joinLobbyBtn.style.opacity = isActive ? '1' : '0.7';
+        joinLobbyBtn.style.cursor = isActive ? 'pointer' : 'not-allowed';
         joinLobbyBtn.title = isActive ? '' : 'No active lobby available';
       });
 
