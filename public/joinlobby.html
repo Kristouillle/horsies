@@ -36,6 +36,7 @@
     </style>
   </head>
   <body>
+    <button id="home-btn" class="button">Home</button>
     <div class="lobby-buttons">
       <div id="action-text">
         <button id="btn1" class="button">Action 1</button>
@@ -116,6 +117,13 @@
         });
         horseButtons.appendChild(backbutton);
       }
+
+      
+      //Routers
+      document.getElementById('home-btn').addEventListener('click', () => {
+        window.location.href = '/';
+      });
+      
     </script>
   </body>
 </html>

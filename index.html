@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>Horse Race</title>
+    <title>Horse Race - Lobby</title>
     <style>
       .lobby-buttons {
         position: absolute;
@@ -97,19 +97,8 @@
       <button id="back-to-create" class="button">Back</button>
     </div>
 
-    <div id="race-controls" class="hidden">
-      <button id="race-btn">Race!</button>
-    </div>
-    
     <script src="/socket.io/socket.io.js"></script>
-    <script src="https://pixijs.download/release/pixi.js"></script>
-    <script type="module">
-      import { setupRace } from '/public/scripts/racelogic.js';
-      
-      const app = new PIXI.Application();
-      await app.init({ width: 1600, height: 900 });
-      document.body.appendChild(app.canvas);
-      
+    <script>
       const lobbyButtons = document.getElementById('lobby-buttons');
       const createMenu = document.getElementById('create-menu');
       const createLobby = document.getElementById('create-lobby');
@@ -149,7 +138,7 @@
       document.getElementById('start-public-game').addEventListener('click', () => {
         sliderMenu.classList.add('hidden');
         socket.emit('create lobby');
-        setupRace(app, parseInt(playerCount.value));
+        window.location.href = `/public/game.html?players=${playerCount.value}`;
       });
 
       socket.on('lobby status', (isActive) => {
@@ -157,9 +146,8 @@
         joinLobbyBtn.title = isActive ? '' : 'No active lobby available';
       });
 
-      // TODO: Implement public and private game handlers
       document.getElementById('private-game').addEventListener('click', () => {
-        alert('Join lobby feature coming soon!');
+        alert('Private game feature coming soon!');
       });
 
       document.getElementById('join-lobby').addEventListener('click', () => {

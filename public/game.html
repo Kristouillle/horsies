@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Horse Race - Game</title>
+    <style>
+      canvas {
+        display: block;
+        margin: 0 auto;
+      }
+      
+      #race-controls {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .button {
+        padding: 15px 30px;
+        font-size: 18px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background: #4CAF50;
+        color: white;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="home-btn" class="button">Home</button>
+    <div id="race-controls" class="hidden">
+      <button id="race-btn" class="button">Race!</button>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://pixijs.download/release/pixi.js"></script>
+    <script type="module">
+      import { setupRace } from '/public/scripts/racelogic.js';
+      
+      const app = new PIXI.Application();
+      await app.init({ width: 1600, height: 900 });
+      document.body.appendChild(app.canvas);
+
+      // Get URL parameters
+      const params = new URLSearchParams(window.location.search);
+      const playerCount = parseInt(params.get('players')) || 4;
+      setupRace(app, playerCount);
+
+      //Routers
+      document.getElementById('home-btn').addEventListener('click', () => {
+        window.location.href = '/';
+      });
+      
+    </script>
+  </body>
+</html>
