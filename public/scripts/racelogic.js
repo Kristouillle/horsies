@@ -23,7 +23,8 @@ export async function setupRace(app, horseCount) {
     for (let i = 0; i < horseCount; i++) {
         const config = horseConfigs.horses[i % horseConfigs.horses.length];
         const horse = PIXI.Sprite.from(config.spritePath);
-        horse.x = 50;
+        horse.anchor.set(0.5); // Set anchor point to center
+        horse.x = 50 + horse.width/2; // Adjust initial position to account for anchor
         horse.y = verticalSpacing * (i + 1);
         horse.scale.set(0.5);
         
@@ -110,6 +111,10 @@ function startRace(horses, app) {
             horse.speed = calculateHorseSpeed(horse);
             horse.x += horse.speed * deltaTime * 60; // Scale for 60fps equivalent
             
+            // Add rotation wobble based on speed
+            const maxRotation = 3 * (Math.PI / 180);
+            horse.rotation = Math.sin(horse.timer * 10) * maxRotation * (horse.speed / horse.baseSpeed);
+            
             // Update speed indicator with behavior
             horse.speedText.text = `${horse.behavior}: ${horse.speed.toFixed(1)}`;
             horse.speedText.x = horse.x + horse.width + 10;
@@ -131,16 +136,6 @@ function startRace(horses, app) {
     
     console.log('Adding ticker...');  // Debug log
     app.ticker.add(currentGameLoop);
-}
-
-function getRandomBehavior() {
-    const behaviors = [
-        'steady', // Maintains consistent speed
-        'sprinter', // Alternates between fast and slow
-        'finisher', // Starts slow, finishes fast
-        'frontrunner' // Starts fast, slows down
-    ];
-    return behaviors[Math.floor(Math.random() * behaviors.length)];
 }
 
 function calculateHorseSpeed(horse) {
