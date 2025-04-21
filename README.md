@@ -86,6 +86,7 @@ A browser-based multiplayer horse racing simulator built with **PixiJS**, **Java
 | ---------------------------------- | ----------- |
 | Setup Socket.io connection         | ✅ Done |
 | Allow phone join via lobby code    | 🟨 In the works |
+| Multiplayer functionnality         | 🟨 In the works |
 | Add stim/sabotage logic            | ⬜️ Pending |
 | Mobile responsiveness & UI testing | ⬜️ Pending |
 
