@@ -30,8 +30,8 @@ export async function setupRace(pixiApp, horseCount) {
                 textures[path] = await PIXI.Assets.load(path);
                 console.log('Loaded texture:', path);
             } catch (error) {
-                console.error('Failed to load texture:', path, error);
-                throw error;
+                console.warn('Failed to load texture:', path, 'Using fallback');
+                textures[path] = await PIXI.Assets.load('/horses/generic/brownhorse.png');
             }
         }
         
