@@ -51,6 +51,16 @@
         "burstChance": 1.2,
         "stamina": 0.80
       }
+    },
+    {
+      "name": "Man but the horse",
+      "spritePath": "/horses/specials/man.png",
+      "personality": {
+        "acceleration": 0,
+        "consistency": 0,
+        "burstChance": 0,
+        "stamina": 0
+      }
     }
   ]
 }
