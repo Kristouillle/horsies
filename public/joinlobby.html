@@ -67,6 +67,26 @@
       .action-image:hover {
         transform: scale(1.1);
       }
+
+      .horse-button {
+        display: flex;
+        align-items: center;
+        padding: 5px 15px;
+        margin: 10px auto;
+        width: 300px;
+      }
+
+      .horse-sprite {
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
+        object-fit: contain;
+      }
+
+      .button-text {
+        flex-grow: 1;
+        text-align: left;
+      }
     </style>
   </head>
   <body>
@@ -86,14 +106,14 @@
       const horseButtons = document.getElementById('horse-buttons');
 
       let selectedAction = '';
-      let horseNames = [];
+      let horseData = [];  // Change from horseNames to horseData
 
       // Request horse names when page loads
       socket.emit('request horse names');
 
-      // Store horse names when received
-      socket.on('horse names', (names) => {
-        horseNames = names;
+      // Update horse data when received
+      socket.on('horse names', (data) => {
+        horseData = data;
       });
 
       // Action images
@@ -110,26 +130,42 @@
       function showHorseButtons() {
         horseButtons.style.display = 'block';
         horseButtons.innerHTML = '';
-        horseNames.forEach(name => {
+        horseData.forEach(horse => {
           const button = document.createElement('button');
-          button.className = 'button';
-          button.textContent = name;
+          button.className = 'button horse-button';
+          
+          // Create horse sprite image with error handling
+          const sprite = document.createElement('img');
+          sprite.className = 'horse-sprite';
+          sprite.onerror = () => {
+            console.log('Failed to load sprite:', horse.spritePath);
+            sprite.src = '/public/horses/generic/brownhorse.png';
+          };
+          sprite.src = horse.spritePath;
+          button.appendChild(sprite);
+          
+          // Create text container
+          const textSpan = document.createElement('span');
+          textSpan.className = 'button-text';
+          textSpan.textContent = horse.name;
+          button.appendChild(textSpan);
+
           button.addEventListener('click', () => {
-            const actionMessage = `${selectedAction} on ${name}`;
+            const actionMessage = `${selectedAction} on ${horse.name}`;
             switch(selectedAction) {
               case 'Stim':
-                console.log('Sending stim for horse:', name); // Add logging
-                socket.emit('stim horse', name);
+                console.log('Sending stim for horse:', horse.name); // Add logging
+                socket.emit('stim horse', horse.name);
                 break;
               case 'Action 2':
-                socket.emit('sabotage horse', name);
+                socket.emit('sabotage horse', horse.name);
                 break;
               case 'Action 3':
-                socket.emit('cheat horse', name);
+                socket.emit('cheat horse', horse.name);
                 break;
             }
             socket.emit('horse selected', {
-              horse: name,
+              horse: horse.name,
               action: selectedAction,
               fullMessage: actionMessage
             });

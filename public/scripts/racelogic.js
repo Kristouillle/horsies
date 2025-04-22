@@ -84,10 +84,13 @@ export async function setupRace(pixiApp, horseCount) {
         }
         activeHorses = horses; // Store horses globally
         
-        // After creating horses, emit their names
-        const horseNames = horses.map(horse => horse.name);
-        socket.emit('horse names', horseNames);
-        socket.emit('race setup', horseNames); // Add this line to store horses in server
+        // After creating horses, emit their names and sprite paths
+        const horseData = horses.map(horse => ({
+            name: horse.name,
+            spritePath: '/public/' + horseConfigs.horses.find(h => h.name === horse.name).spritePath.replace(/^\//, '')
+        }));
+        socket.emit('horse names', horseData);
+        socket.emit('race setup', horseData);
         
         // Show race button after setup
         const raceControls = document.getElementById('race-controls');
@@ -275,5 +278,7 @@ export function stim(horseName) {
 
     // Increment stim count
     horse.stimCount++;
-    console.log(`Added stim to ${horseName}, total stims: ${horse.stimCount}`);
+    
+    console.log(`Stimulating horse ${horse.name}. New stim count: ${horse.stimCount}`);
 }
+    
