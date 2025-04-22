@@ -2,16 +2,21 @@ let currentGameLoop = null;
 let app;
 let actionText;
 let socket;
-
+let activeHorses = [];
+let isRaceStarted = false; // Add race state tracking
 
 export async function setupRace(pixiApp, horseCount) {
     app = pixiApp;
     socket = io();
     
     socket.on('display text', (buttonText) => {
-        handleAction(buttonText);
+        displayText(buttonText);
     });
     
+    socket.on('stim horse', (name) => {
+        stim(name);
+    });
+
     try {
         // Load horse configurations
         const horseConfigs = await fetch('/public/data/horses.json').then(r => r.json());
@@ -77,6 +82,7 @@ export async function setupRace(pixiApp, horseCount) {
             app.stage.addChild(speedText);
             horses.push(horse);
         }
+        activeHorses = horses; // Store horses globally
         
         // After creating horses, emit their names
         const horseNames = horses.map(horse => horse.name);
@@ -113,7 +119,9 @@ export async function setupRace(pixiApp, horseCount) {
 }
 
 function startRace(horses, app) {
-    console.log('Race starting...');  // Debug log
+    console.log('Race starting...', horses);
+    isRaceStarted = true;
+    socket.emit('race start');
     const raceBtn = document.getElementById('race-btn');
     raceBtn.disabled = true;
     
@@ -122,18 +130,28 @@ function startRace(horses, app) {
         app.ticker.remove(currentGameLoop);
     }
     
-    const finishLine = app.screen.width - 300; // Adjusted finish line
+    const finishLine = app.screen.width - 300;
     let winner = false;
     let lastTime = performance.now();
     
     // Initialize horses with race-specific properties
     horses.forEach(horse => {
-        horse.baseSpeed = Math.random() * 1 + 0.5; // Reduced base speed (0.5-1.5)
+        // Ensure stimCount exists and is a number
+        if (!horse.stimCount) horse.stimCount = 0;
+        
+        horse.baseSpeed = Math.random() * 1 + 0.5;
         horse.timer = 0;
-        horse.speed = horse.baseSpeed;
-        horse.progressRatio = 0; // Track race progress
-        horse.visible = true; // Ensure visibility
-        console.log(`Horse initialized - behavior: ${horse.behavior}, visible: ${horse.visible}`);
+        horse.speedMultiplier = 1 + (horse.stimCount * 0.5);
+        horse.speed = horse.baseSpeed * horse.speedMultiplier; // Set initial speed
+        horse.progressRatio = 0;
+        horse.visible = true;
+        
+        console.log(`Initializing horse ${horse.name}:`, {
+            stimCount: horse.stimCount,
+            baseSpeed: horse.baseSpeed,
+            multiplier: horse.speedMultiplier,
+            speed: horse.speed
+        });
     });
     
     currentGameLoop = (delta) => {
@@ -187,25 +205,26 @@ function startRace(horses, app) {
 function calculateHorseSpeed(horse) {
     const baseVariation = Math.sin(horse.timer * 0.05) * 0.75 * horse.personality.consistency;
     const staminaFactor = Math.pow(1 - horse.progressRatio, 1 - horse.personality.stamina);
+    var multiplier = horse.speedMultiplier || 1;
     
     switch (horse.behavior) {
         case 'steady':
-            return (horse.baseSpeed + baseVariation * 0.3) * horse.personality.consistency;
+            return ((horse.baseSpeed + baseVariation * 0.3) * horse.personality.consistency) * multiplier;
             
         case 'sprinter':
             const sprintBoost = Math.random() > horse.personality.burstChance ? 2.5 : 0;
-            return (horse.baseSpeed + sprintBoost + baseVariation) * horse.personality.acceleration;
+            return ((horse.baseSpeed + sprintBoost + baseVariation) * horse.personality.acceleration) * multiplier;
             
         case 'finisher':
             const finishBoost = horse.progressRatio * 2 * horse.personality.acceleration;
-            return (horse.baseSpeed + finishBoost + baseVariation) * staminaFactor;
+            return ((horse.baseSpeed + finishBoost + baseVariation) * staminaFactor) * multiplier;
             
         case 'frontrunner':
             const frontBoost = (1 - horse.progressRatio) * 2 * horse.personality.acceleration;
-            return (horse.baseSpeed + frontBoost + baseVariation) * staminaFactor;
+            return ((horse.baseSpeed + frontBoost + baseVariation) * staminaFactor) * multiplier;
             
         default:
-            return horse.baseSpeed;
+            return horse.baseSpeed * multiplier;
     }
 }
 
@@ -215,16 +234,19 @@ function announceWinner(horse, horseNumber) {
 
 function resetRace(horses) {
     console.log('Resetting race...');
+    isRaceStarted = false; // Reset race state
     horses.forEach(horse => {
         horse.x = 50;
         horse.speedText.x = horse.x + horse.width + 10;
         horse.speed = 0;
         horse.visible = true;
         horse.speedText.text = 'Speed: 0';
+        horse.stimCount = 0; // Reset stim count
+        horse.speedMultiplier = 1;
     });
 }
 
-export function handleAction(buttonText) {
+export function displayText(buttonText) {
     actionText.text = buttonText;
     actionText.alpha = 1; // Ensure full opacity
     
@@ -232,4 +254,26 @@ export function handleAction(buttonText) {
     setTimeout(() => {
         actionText.text = '';
     }, 1000);
+}
+
+export function stim(horseName) {
+    if (isRaceStarted) {
+        console.log('Cannot stim after race has started');
+        return;
+    }
+
+    const horse = activeHorses.find(h => h.name === horseName);
+    if (!horse) {
+        console.error('Horse not found for stim:', horseName);
+        return;
+    }
+
+    // Initialize stimCount if it doesn't exist
+    if (typeof horse.stimCount !== 'number') {
+        horse.stimCount = 0;
+    }
+
+    // Increment stim count
+    horse.stimCount++;
+    console.log(`Added stim to ${horseName}, total stims: ${horse.stimCount}`);
 }

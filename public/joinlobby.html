@@ -73,7 +73,7 @@
     <button id="home-btn" class="button">Home</button>
     <div class="lobby-buttons">
       <div id="action-text">
-        <img src="/public/menus/stim.png" class="action-image" data-action="Action 1" alt="Action 1">
+        <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
         <img src="/public/menus/sabotage.png" class="action-image" data-action="Action 2" alt="Action 2">
         <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
       </div>
@@ -116,12 +116,23 @@
           button.textContent = name;
           button.addEventListener('click', () => {
             const actionMessage = `${selectedAction} on ${name}`;
+            switch(selectedAction) {
+              case 'Stim':
+                console.log('Sending stim for horse:', name); // Add logging
+                socket.emit('stim horse', name);
+                break;
+              case 'Action 2':
+                socket.emit('sabotage horse', name);
+                break;
+              case 'Action 3':
+                socket.emit('cheat horse', name);
+                break;
+            }
             socket.emit('horse selected', {
               horse: name,
               action: selectedAction,
               fullMessage: actionMessage
             });
-            socket.emit('button pressed', actionMessage);
           });
           horseButtons.appendChild(button);
         });
@@ -132,7 +143,7 @@
         backbutton.addEventListener('click', () => {
           horseButtons.style.display = 'none';
           actionText.innerHTML = `
-            <img src="/public/menus/stim.png" class="action-image" data-action="Action 1" alt="Action 1">
+            <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
             <img src="/public/menus/sabotage.png" class="action-image" data-action="Action 2" alt="Action 2">
             <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
           `;
@@ -157,7 +168,7 @@
       document.getElementById('home-btn').addEventListener('click', () => {
         window.location.href = '/';
       });
-      
+
     </script>
   </body>
 </html>
