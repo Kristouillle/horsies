@@ -68,9 +68,9 @@ io.on('connection', (socket) => {
     io.emit('display text', buttonText);
   });
 
-  socket.on('horse names', (names) => {
-    console.log('Horse names received:', names);
-    io.emit('show horse options', names);  // Changed to emit show horse options instead
+  socket.on('horse names', (data) => {
+    console.log('Horse data received:', data);
+    io.emit('show horse options', data);
   });
 
   socket.on('race setup', (horses) => {
@@ -86,6 +86,17 @@ io.on('connection', (socket) => {
   socket.on('horse selected', (data) => {
     console.log('Horse selected:', data);
     io.emit('display text', data.fullMessage);
+  });
+
+  socket.on('stim horse', (name) => {
+    console.log('Server received stim request for horse:', name);
+    io.emit('stim horse', name); // Broadcast to all clients
+  });
+
+  socket.on('race start', () => {
+    console.log('Race starting from server');
+    // Broadcast race start to all connected clients
+    io.emit('race start');
   });
 
 });
