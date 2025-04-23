@@ -16,6 +16,10 @@ export async function setupRace(pixiApp, horseCount) {
     socket.on('stim horse', (name) => {
         stim(name);
     });
+    
+    socket.on('sabotage horse', (name) => {
+        sabotage(name);
+    });
 
     try {
         // Load horse configurations
@@ -43,13 +47,71 @@ export async function setupRace(pixiApp, horseCount) {
         // Calculate spacing
         const verticalSpacing = app.screen.height / (horseCount + 2);
         
-        // Create horses
+        // Draft horses based on rarity
+        function draftHorses(configs, count) {
+            const drafted = [];
+            const available = [...configs.horses];
+            
+            while (drafted.length < count && available.length > 0) {
+                // First, determine the rarity
+                let selectedRarity = 1;
+                for (let rarity = 1; rarity <= 5; rarity++) {
+                    const chance = 1 / Math.pow(1.5, rarity - 1);
+                    if (Math.random() < chance) {
+                        selectedRarity = rarity;
+                        break;
+                    }
+                }
+                
+                // Get all horses of the selected rarity
+                const rarityPool = available.filter(h => h.rarity === selectedRarity);
+                
+                if (rarityPool.length > 0) {
+                    // Draft a random horse from the rarity pool
+                    const index = Math.floor(Math.random() * rarityPool.length);
+                    const horse = rarityPool[index];
+                    drafted.push(horse);
+                    available.splice(available.indexOf(horse), 1);
+                } else {
+                    // Create a generic horse with random stats
+                    const genericSprites = [
+                        '/horses/generic/americanquarter.png',
+                        '/horses/generic/appaloosa.png',
+                        '/horses/generic/brownhorse.png',
+                        '/horses/generic/brownspothorse.png',
+                        '/horses/generic/emohorse.png',
+                        '/horses/generic/morgan.png',
+                        '/horses/generic/stallion.png',
+                        '/horses/generic/warmbloods.png',
+                        '/horses/generic/whitehorse.png'
+                    ];
+                    const genericHorse = {
+                        name: `Generic Horse ${drafted.length + 1}`,
+                        spritePath: genericSprites[Math.floor(Math.random() * genericSprites.length)],
+                        rarity: selectedRarity,
+                        personality: {
+                            consistency: Math.random() * 0.5 + 0.5,
+                            stamina: Math.random() * 0.5 + 0.5,
+                            acceleration: Math.random() * 0.5 + 0.5,
+                            burstChance: Math.random() * 0.3 + 0.2
+                        }
+                    };
+                    drafted.push(genericHorse);
+                }
+            }
+            
+            return drafted;
+        }
+        
+        const draftedHorses = draftHorses(horseConfigs, horseCount);
+        const horses = [];
+        
+        // Create horses using drafted configs
         const BEHAVIORS = ['steady', 'sprinter', 'finisher', 'frontrunner'];
         const getRandomBehavior = () => BEHAVIORS[Math.floor(Math.random() * BEHAVIORS.length)];
 
-        const horses = [];
-        for (let i = 0; i < horseCount; i++) {
-            const config = horseConfigs.horses[i % horseConfigs.horses.length];
+        for (let i = 0; i < draftedHorses.length; i++) {
+            const config = draftedHorses[i];
             const horse = new PIXI.Sprite(textures[config.spritePath]);
             horse.anchor.set(0.5); // Set anchor point to center
             horse.x = 50 + horse.width/2; // Adjust initial position to account for anchor
@@ -77,6 +139,7 @@ export async function setupRace(pixiApp, horseCount) {
             horse.name = config.name;
             horse.behavior = config.behavior || getRandomBehavior(); // Assign random behavior if none provided
             horse.personality = config.personality;
+            horse.rarity = config.rarity; // Store rarity for reference
             
             app.stage.addChild(horse);
             app.stage.addChild(speedText);
@@ -141,10 +204,12 @@ function startRace(horses, app) {
     horses.forEach(horse => {
         // Ensure stimCount exists and is a number
         if (!horse.stimCount) horse.stimCount = 0;
+        // Ensure sabotageCount exists and is a number
+        if (!horse.sabotageCount) horse.sabotageCount = 0;
         
         horse.baseSpeed = Math.random() * 1 + 0.5;
         horse.timer = 0;
-        horse.speedMultiplier = 1 + (horse.stimCount * 0.5);
+        horse.speedMultiplier = 1 + (horse.stimCount * 0.5) - (horse.sabotageCount * 0.5); // Adjust speed based on stim/sabotage
         horse.speed = horse.baseSpeed * horse.speedMultiplier; // Set initial speed
         horse.progressRatio = 0;
         horse.visible = true;
@@ -281,4 +346,26 @@ export function stim(horseName) {
     
     console.log(`Stimulating horse ${horse.name}. New stim count: ${horse.stimCount}`);
 }
+
+export function sabotage(horseName) {
+    if (isRaceStarted) {
+        console.log('Cannot sabotage after race has started');
+        return;
+    }
+
+    const horse = activeHorses.find(h => h.name === horseName);
+    if (!horse) {
+        console.error('Horse not found for sabotage:', horseName);
+        return;
+    }
+
+    // Initialize sabotageCount if it doesn't exist
+    if (typeof horse.sabotageCount !== 'number') {
+        horse.sabotageCount = 0;
+    }
+
+    // Increment sabotage count
+    horse.sabotageCount++;
     
+    console.log(`Sabotageulating horse ${horse.name}. New sabotage count: ${horse.sabotageCount}`);
+}

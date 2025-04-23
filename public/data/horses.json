@@ -3,6 +3,7 @@
     {
       "name": "Thunder Dash",
       "spritePath": "/horses/generic/brownspothorse.png",
+      "rarity": 1,
       "personality": {
         "acceleration": 1.1,
         "consistency": 0.85,
@@ -13,6 +14,7 @@
     {
       "name": "Steady Star",
       "spritePath": "/horses/generic/whitehorse.png",
+      "rarity": 1,
       "personality": {
         "acceleration": 0.95,
         "consistency": 1.15,
@@ -23,7 +25,7 @@
     {
       "name": "Final Sprint",
       "spritePath": "/horses/generic/brownhorse.png",
-      "behavior": "finisher",
+      "rarity": 1,
       "personality": {
         "acceleration": 1.2,
         "consistency": 0.9,
@@ -34,6 +36,62 @@
     {
       "name": "Early Bird",
       "spritePath": "/horses/generic/stallion.png",
+      "rarity": 1,
+      "personality": {
+        "acceleration": 1.15,
+        "consistency": 0.95,
+        "burstChance": 0.97,
+        "stamina": 0.85
+      }
+    },
+    {
+      "name": "Maximillion",
+      "spritePath": "/horses/generic/americanquarter.png",
+      "rarity": 1,
+      "personality": {
+        "acceleration": 1.05,
+        "consistency": 1.15,
+        "burstChance": 0.93,
+        "stamina": 0.90
+      }
+    },
+    {
+      "name": "Oreo Milkshake",
+      "spritePath": "/horses/generic/appaloosa.png",
+      "rarity": 1,
+      "personality": {
+        "acceleration": 1.05,
+        "consistency": 1,
+        "burstChance": 1,
+        "stamina": 0.85
+      }
+    },
+    {
+      "name": "Neighvana",
+      "spritePath": "/horses/generic/emohorse.png",
+      "rarity": 1,
+      "personality": {
+        "acceleration": 0.98,
+        "consistency": 1,
+        "burstChance": 1.15,
+        "stamina": 0.90
+      }
+    },
+    {
+      "name": "Spray Tan",
+      "spritePath": "/horses/generic/morgan.png",
+      "rarity": 1,
+      "personality": {
+        "acceleration": 1.15,
+        "consistency": 0.90,
+        "burstChance": 1.05,
+        "stamina": 0.85
+      }
+    },
+    {
+      "name": "Chillhooves",
+      "spritePath": "/horses/generic/warmbloods.png",
+      "rarity": 1,
       "personality": {
         "acceleration": 1.15,
         "consistency": 0.95,
@@ -44,6 +102,7 @@
     {
       "name": "Sad horse",
       "spritePath": "/horses/specials/bojackhorse.png",
+      "rarity": 2,
       "behavior": "frontrunner",
       "personality": {
         "acceleration": 1.2,
@@ -55,6 +114,7 @@
     {
       "name": "Man but the horse",
       "spritePath": "/horses/specials/man.png",
+      "rarity": 5,
       "personality": {
         "acceleration": 0,
         "consistency": 0,
