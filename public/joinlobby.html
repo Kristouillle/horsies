@@ -87,10 +87,55 @@
         flex-grow: 1;
         text-align: left;
       }
+
+      .action-image.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      .horse-button.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+      
+      #mode-toggle {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+      }
+
+      #wallet-display {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        border-radius: 5px;
+        color: gold;
+        font-size: 18px;
+        font-family: 'Schoolbell', cursive;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .coin-icon {
+        width: 40px;
+        height: 40px;
+      }
     </style>
   </head>
   <body>
+    <div id="wallet-display">
+      <img src="/public/menus/dollar.png" class="coin-icon" alt="Coins">
+      <span id="coin-amount">10</span>
+    </div>
     <button id="home-btn" class="button">Home</button>
+    <span id="restricted-status" style="position: fixed; top: 50px; right: 10px; font-size: 18px; color: white;">
+      Restricted: true
+    </span>
     <div class="lobby-buttons">
       <div id="action-text">
         <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
@@ -102,14 +147,48 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const socket = io();
+      let userCoins = 10;
+
+      // Add these new event handlers after socket initialization
+      socket.on('connect', () => {
+        socket.emit('request wallet');
+      });
+
+      socket.on('wallet update', (amount) => {
+        userCoins = amount;
+        document.getElementById('coin-amount').textContent = amount;
+      });
+
       const actionText = document.getElementById('action-text');
       const horseButtons = document.getElementById('horse-buttons');
+      const homeButton = document.getElementById('home-btn');
+
+      // Add error handling for home button
+      if (!homeButton) {
+        console.error('Home button not found in DOM');
+      } else {
+        homeButton.addEventListener('click', () => {
+          console.log('Home button clicked');
+          window.location.href = '/';
+        });
+      }
 
       let selectedAction = '';
-      let horseData = [];  // Change from horseNames to horseData
+      let horseData = [];
+      let raceInProgress = false;
+      let restrictedMode = true; // Default value
 
-      // Request horse names when page loads
+      // Remove the URL parameter check
+      socket.on('restricted mode', (mode) => {
+          console.log('Received restricted mode:', mode);
+          restrictedMode = mode;
+          document.getElementById('restricted-status').textContent = `Restricted: ${restrictedMode}`;
+      });
+
+      // Request horse names and settings when page loads
       socket.emit('request horse names');
+      
+      let usedActions = {}; // Track used actions per horse
 
       // Update horse data when received
       socket.on('horse names', (data) => {
@@ -127,13 +206,84 @@
         });
       });
 
+      socket.on('race start', () => {
+        raceInProgress = true;
+        toggleActionButtons();
+      });
+
+      socket.on('race end', () => {
+        raceInProgress = false;
+        toggleActionButtons();
+      });
+
+      function toggleActionButtons() {
+        if (raceInProgress) {
+          horseButtons.style.display = 'none';
+          const images = document.querySelectorAll('.action-image');
+          images.forEach(image => {
+            image.classList.add('disabled');
+          });
+        } else {
+          // Reset everything when race ends
+          usedActions = {};  // Reset all used actions
+          horseButtons.style.display = 'none';  // Hide horse selection
+          const images = document.querySelectorAll('.action-image');
+          images.forEach(image => {
+            image.classList.remove('disabled');
+          });
+          
+          // Clear any selected action
+          selectedAction = '';
+          
+          // Reset the action text to original state with images
+          actionText.innerHTML = `
+            <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
+            <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
+            <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
+          `;
+          
+          // Reattach event listeners to new images
+          const newImages = actionText.querySelectorAll('.action-image');
+          newImages.forEach((image) => {
+            image.addEventListener('click', () => {
+              if (!raceInProgress) {  // Double check race isn't in progress
+                selectedAction = image.dataset.action;
+                socket.emit('button pressed', selectedAction);
+                actionText.textContent = `Selected: ${selectedAction}`;
+                showHorseButtons();
+              }
+            });
+          });
+        }
+      }
+
+      // Add mode toggle handler
+      document.getElementById('mode-toggle')?.addEventListener('click', () => {
+        restrictedMode = !restrictedMode;
+        updateRestrictedStatus(); // Add this line
+        if (selectedAction) {
+          showHorseButtons(); // Refresh horse buttons if action is selected
+        }
+      });
+
       function showHorseButtons() {
         horseButtons.style.display = 'block';
         horseButtons.innerHTML = '';
+        
+        // Initialize usedActions if needed
+        if (restrictedMode && !usedActions[selectedAction]) {
+          usedActions[selectedAction] = new Set();
+        }
+
         horseData.forEach(horse => {
           const button = document.createElement('button');
           button.className = 'button horse-button';
           
+          // Disable button if horse already used this action in restricted mode
+          if (restrictedMode && usedActions[selectedAction]?.has(horse.name)) {
+            button.classList.add('disabled');
+          }
+
           // Create horse sprite image with error handling
           const sprite = document.createElement('img');
           sprite.className = 'horse-sprite';
@@ -151,6 +301,32 @@
           button.appendChild(textSpan);
 
           button.addEventListener('click', () => {
+            if (restrictedMode && usedActions[selectedAction]?.has(horse.name)) {
+              return; // Prevent action if already used in restricted mode
+            }
+
+            let cost = 0;
+            switch(selectedAction) {
+              case 'Stim':
+                cost = 2;
+                break;
+              case 'Sabotage':
+                cost = 3;
+                break;
+              case 'Action 3':
+                cost = 5;
+                break;
+            }
+
+            if (userCoins < cost) {
+              alert('Not enough coins!');
+              return;
+            }
+
+            socket.emit('spend coins', cost);
+            userCoins -= cost; // Update local coin count
+            document.getElementById('coin-amount').textContent = userCoins; // Update display
+            
             const actionMessage = `${selectedAction} on ${horse.name}`;
             switch(selectedAction) {
               case 'Stim':
@@ -164,6 +340,13 @@
                 socket.emit('cheat horse', horse.name);
                 break;
             }
+
+            // Track used action in restricted mode
+            if (restrictedMode) {
+              usedActions[selectedAction].add(horse.name);
+              showHorseButtons(); // Refresh to update disabled states
+            }
+
             socket.emit('horse selected', {
               horse: horse.name,
               action: selectedAction,
@@ -198,12 +381,6 @@
         });
         horseButtons.appendChild(backbutton);
       }
-
-      
-      //Routers
-      document.getElementById('home-btn').addEventListener('click', () => {
-        window.location.href = '/';
-      });
 
     </script>
   </body>

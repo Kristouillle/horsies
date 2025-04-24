@@ -99,6 +99,24 @@
         margin: 10px auto;
         width: 300px;
       }
+
+      .toggle-container {
+        margin: 20px 0;
+        font-family: 'Schoolbell', cursive;
+        font-size: 24px;
+      }
+
+      .toggle-label {
+        display: inline-block;
+        margin-right: 10px;
+        vertical-align: middle;
+      }
+
+      #restricted-mode {
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+      }
     </style>
   </head>
   <body>
@@ -117,6 +135,10 @@
       <div class="slider-container">
         <div id="player-value" class="slider-header">Players: 4</div>
         <input type="range" id="player-count" min="4" max="12" value="4">
+      </div>
+      <div class="toggle-container">
+        <label class="toggle-label">Restricted Mode</label>
+        <input type="checkbox" id="restricted-mode" checked>
       </div>
       <button id="start-public-game" class="button">Start Game</button>
       <button id="back-to-create" class="button">Back</button>
@@ -163,7 +185,8 @@
       document.getElementById('start-public-game').addEventListener('click', () => {
         sliderMenu.classList.add('hidden');
         socket.emit('create lobby');
-        window.location.href = `/public/game.html?players=${playerCount.value}`;
+        const restrictedMode = document.getElementById('restricted-mode').checked;
+        window.location.href = `/public/game.html?players=${playerCount.value}&restricted=${restrictedMode}`;
       });
 
       socket.on('lobby status', (isActive) => {

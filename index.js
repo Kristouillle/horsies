@@ -14,6 +14,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let currentRaceHorses = [];
 let isLobbyActive = false;  // Add this line
+let restrictedMode = true; // Add this line
+let userWallets = new Map(); // Add this line to track user wallets
 
 // Keep user "connection" alive through cookie
 app.use(cookieParser());
@@ -31,8 +33,12 @@ app.use((req, res, next) => {
       maxAge: 1000 * 60 * 60 * 24 // 1 day
     });
     req.user_id = newId;
+    userWallets.set(newId.toString(), 10); // Initialize wallet with 10 coins
   } else {
     req.user_id = req.cookies.user_id;
+    if (!userWallets.has(req.user_id.toString())) {
+      userWallets.set(req.user_id.toString(), 10); // Initialize wallet if not exists
+    }
   }
   next();
 });
@@ -110,14 +116,17 @@ io.on('connection', (socket) => {
     io.emit('show horse options', data);  // Changed to emit show horse options instead
   });
 
-  socket.on('race setup', (horses) => {
-    console.log('Race horses set:', horses, `user_id:${socket.user_id}`);
-    currentRaceHorses = horses;
+  socket.on('race setup', (data) => {
+    console.log('Race setup received:', data);
+    currentRaceHorses = data.horses;
+    restrictedMode = data.restrictedMode;
+    console.log('Restricted mode set to:', restrictedMode);
   });
 
   socket.on('request horse names', () => {
-    console.log('Sending horse names:', currentRaceHorses, `user_id:${socket.user_id}`);
+    console.log('Sending horse names and settings:', currentRaceHorses, restrictedMode);
     socket.emit('horse names', currentRaceHorses);
+    socket.emit('restricted mode', restrictedMode);
   });
 
   socket.on('horse selected', (data) => {
@@ -139,6 +148,33 @@ io.on('connection', (socket) => {
     console.log('Race starting from server');
     // Broadcast race start to all connected clients
     io.emit('race start');
+  });
+
+  socket.on('race end', () => {
+    console.log('Race ended');
+    io.emit('race end');
+  });
+
+  // Add these new event handlers
+  socket.on('request wallet', () => {
+    const wallet = userWallets.get(socket.user_id.toString()) || 10;
+    socket.emit('wallet update', wallet);
+  });
+
+  socket.on('spend coins', (amount) => {
+    const currentWallet = userWallets.get(socket.user_id.toString()) || 0;
+    if (currentWallet >= amount) {
+      userWallets.set(socket.user_id.toString(), currentWallet - amount);
+      socket.emit('wallet update', currentWallet - amount);
+      return true;
+    }
+    return false;
+  });
+
+  socket.on('add coins', (amount) => {
+    const currentWallet = userWallets.get(socket.user_id.toString()) || 0;
+    userWallets.set(socket.user_id.toString(), currentWallet + amount);
+    socket.emit('wallet update', currentWallet + amount);
   });
 
 });

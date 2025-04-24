@@ -9,6 +9,10 @@ export async function setupRace(pixiApp, horseCount) {
     app = pixiApp;
     socket = io();
     
+    // Get restricted mode from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const restrictedMode = urlParams.get('restricted') === 'true';
+    
     socket.on('display text', (buttonText) => {
         displayText(buttonText);
     });
@@ -53,15 +57,15 @@ export async function setupRace(pixiApp, horseCount) {
             const available = [...configs.horses];
             
             while (drafted.length < count && available.length > 0) {
-                // First, determine the rarity
-                let selectedRarity = 1;
-                for (let rarity = 1; rarity <= 5; rarity++) {
-                    const chance = 1 / Math.pow(1.5, rarity - 1);
-                    if (Math.random() < chance) {
-                        selectedRarity = rarity;
-                        break;
-                    }
-                }
+                // First, determine the rarity using cumulative probability
+                const random = Math.random();
+                let selectedRarity;
+                
+                if (random < 0.04) selectedRarity = 5;        // 4% Legendary
+                else if (random < 0.10) selectedRarity = 4;   // 6% Epic
+                else if (random < 0.22) selectedRarity = 3;   // 12% Rare
+                else if (random < 0.44) selectedRarity = 2;   // 22% Uncommon
+                else selectedRarity = 1;                       // 56% Common
                 
                 // Get all horses of the selected rarity
                 const rarityPool = available.filter(h => h.rarity === selectedRarity);
@@ -147,13 +151,13 @@ export async function setupRace(pixiApp, horseCount) {
         }
         activeHorses = horses; // Store horses globally
         
-        // After creating horses, emit their names and sprite paths
+        // After creating horses, emit their names, sprite paths, and restricted mode
         const horseData = horses.map(horse => ({
             name: horse.name,
             spritePath: '/public/' + horseConfigs.horses.find(h => h.name === horse.name).spritePath.replace(/^\//, '')
         }));
         socket.emit('horse names', horseData);
-        socket.emit('race setup', horseData);
+        socket.emit('race setup', { horses: horseData, restrictedMode });
         
         // Show race button after setup
         const raceControls = document.getElementById('race-controls');
@@ -298,6 +302,7 @@ function calculateHorseSpeed(horse) {
 
 function announceWinner(horse, horseNumber) {
     alert(`${horse.name} (Horse #${horseNumber}) wins!`);
+    socket.emit('race end'); // Emit race end event
 }
 
 function resetRace(horses) {
