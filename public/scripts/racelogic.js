@@ -298,6 +298,7 @@ function calculateHorseSpeed(horse) {
 
 function announceWinner(horse, horseNumber) {
     alert(`${horse.name} (Horse #${horseNumber}) wins!`);
+    socket.emit('race end'); // Emit race end event
 }
 
 function resetRace(horses) {

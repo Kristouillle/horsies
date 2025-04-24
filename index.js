@@ -141,6 +141,11 @@ io.on('connection', (socket) => {
     io.emit('race start');
   });
 
+  socket.on('race end', () => {
+    console.log('Race ended');
+    io.emit('race end');
+  });
+
 });
 
 server.listen(3000, () => {

@@ -87,6 +87,12 @@
         flex-grow: 1;
         text-align: left;
       }
+
+      .action-image.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
@@ -107,6 +113,7 @@
 
       let selectedAction = '';
       let horseData = [];  // Change from horseNames to horseData
+      let raceInProgress = false;
 
       // Request horse names when page loads
       socket.emit('request horse names');
@@ -126,6 +133,55 @@
           showHorseButtons();
         });
       });
+
+      socket.on('race start', () => {
+        raceInProgress = true;
+        toggleActionButtons();
+      });
+
+      socket.on('race end', () => {
+        raceInProgress = false;
+        toggleActionButtons();
+      });
+
+      function toggleActionButtons() {
+        if (raceInProgress) {
+          horseButtons.style.display = 'none';
+          const images = document.querySelectorAll('.action-image');
+          images.forEach(image => {
+            image.classList.add('disabled');
+          });
+        } else {
+          // Reset everything when race ends
+          const images = document.querySelectorAll('.action-image');
+          images.forEach(image => {
+            image.classList.remove('disabled');
+          });
+          
+          // Clear any selected action
+          selectedAction = '';
+          
+          // Reset the action text to original state with images
+          actionText.innerHTML = `
+            <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
+            <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
+            <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
+          `;
+          
+          // Reattach event listeners to new images
+          const newImages = actionText.querySelectorAll('.action-image');
+          newImages.forEach((image) => {
+            image.addEventListener('click', () => {
+              if (!raceInProgress) {  // Double check race isn't in progress
+                selectedAction = image.dataset.action;
+                socket.emit('button pressed', selectedAction);
+                actionText.textContent = `Selected: ${selectedAction}`;
+                showHorseButtons();
+              }
+            });
+          });
+        }
+      }
 
       function showHorseButtons() {
         horseButtons.style.display = 'block';
