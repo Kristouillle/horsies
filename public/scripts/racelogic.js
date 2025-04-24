@@ -35,8 +35,11 @@ export async function setupRace(pixiApp, horseCount) {
     });
 
     try {
-        // Load horse configurations
-        const horseConfigs = await fetch('/public/data/horses.json').then(r => r.json());
+        // Load horse configurations and names
+        const [horseConfigs, nameBank] = await Promise.all([
+            fetch('/public/data/horses.json').then(r => r.json()),
+            fetch('/public/data/horsenames.json').then(r => r.json())
+        ]);
         
         // Load background
         await PIXI.Assets.load('/public/env/sand.png');
@@ -60,6 +63,13 @@ export async function setupRace(pixiApp, horseCount) {
         // Calculate spacing
         const verticalSpacing = app.screen.height / (horseCount + 2);
         
+        // Helper function to generate random horse name
+        function generateHorseName() {
+            const prefix = nameBank.prefixes[Math.floor(Math.random() * nameBank.prefixes.length)];
+            const suffix = nameBank.suffixes[Math.floor(Math.random() * nameBank.suffixes.length)];
+            return `${prefix} ${suffix}`;
+        }
+
         // Draft horses based on rarity
         function draftHorses(configs, count) {
             const drafted = [];
@@ -98,9 +108,10 @@ export async function setupRace(pixiApp, horseCount) {
                         '/horses/generic/warmbloods.png',
                         '/horses/generic/whitehorse.png'
                     ];
+                    const selectedSprite = genericSprites[Math.floor(Math.random() * genericSprites.length)];
                     const genericHorse = {
-                        name: `Generic Horse ${drafted.length + 1}`,
-                        spritePath: genericSprites[Math.floor(Math.random() * genericSprites.length)],
+                        name: generateHorseName(),
+                        spritePath: selectedSprite,  // Store the selected sprite path
                         rarity: selectedRarity,
                         personality: {
                             consistency: Math.random() * 0.5 + 0.5,
@@ -161,10 +172,13 @@ export async function setupRace(pixiApp, horseCount) {
         activeHorses = horses; // Store horses globally
         
         // After creating horses, emit their names, sprite paths, and restricted mode
-        const horseData = horses.map(horse => ({
-            name: horse.name,
-            spritePath: '/public/' + horseConfigs.horses.find(h => h.name === horse.name)?.spritePath.replace(/^\//, '') || 'horses/generic/brownhorse.png'
-        }));
+        const horseData = horses.map(horse => {
+            const draftedHorse = draftedHorses.find(h => h.name === horse.name);
+            return {
+                name: horse.name,
+                spritePath: draftedHorse?.spritePath || '/horses/generic/brownhorse.png'
+            };
+        });
 
         // Emit multiple times to ensure delivery
         socket.emit('horse names', horseData);

@@ -288,10 +288,20 @@
           const sprite = document.createElement('img');
           sprite.className = 'horse-sprite';
           sprite.onerror = () => {
-            console.log('Failed to load sprite:', horse.spritePath);
+            console.warn('Failed to load sprite:', horse.spritePath);
             sprite.src = '/public/horses/generic/brownhorse.png';
           };
-          sprite.src = horse.spritePath;
+
+          // Determine correct sprite path
+          let spritePath = horse.spritePath || '/horses/generic/brownhorse.png';
+          if (!spritePath.startsWith('/public/')) {
+            spritePath = spritePath.startsWith('/') ? 
+              `/public${spritePath}` : 
+              `/public/${spritePath}`;
+          }
+          
+          sprite.src = spritePath;
+          console.log('Loading sprite:', spritePath); // Add logging for debugging
           button.appendChild(sprite);
           
           // Create text container

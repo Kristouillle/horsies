@@ -1,0 +1,12 @@
+{
+    "prefixes": [
+        "Swift", "Mighty", "Thunder", "Shadow", "Star", "Moon", "Sun", "Wind", "Storm",
+        "Silver", "Golden", "Midnight", "Dawn", "Dusk", "Wild", "Royal", "Mystic", "Iron",
+        "Winter", "Summer", "Autumn", "Spring", "Noble", "Brave", "Fierce", "Proud"
+    ],
+    "suffixes": [
+        "Runner", "Spirit", "Heart", "Hooves", "Warrior", "Chaser", "Dancer", "Dreamer",
+        "Racer", "Gallop", "Flash", "Dash", "Storm", "Wind", "Blaze", "Fire", "Fury",
+        "Knight", "Prince", "King", "Queen", "Lord", "Sage", "Walker", "Rider"
+    ]
+}
