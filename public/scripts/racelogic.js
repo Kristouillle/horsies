@@ -229,7 +229,7 @@ function startRace(horses, app) {
     }
     
     const finishLine = app.screen.width - 300;
-    let winner = false;
+    let finishedHorses = [];  // Track finished horses instead of single winner
     let lastTime = performance.now();
     
     // Initialize horses with race-specific properties
@@ -255,17 +255,21 @@ function startRace(horses, app) {
     });
     
     currentGameLoop = (delta) => {
-        if (winner) return;
-        
         const currentTime = performance.now();
-        const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
+        const deltaTime = (currentTime - lastTime) / 1000;
         lastTime = currentTime;
         
+        let allFinished = true;  // Check if all horses have finished
+        
         horses.forEach((horse, index) => {
-            if (!horse.visible) {
-                console.log(`Horse ${index} invisible!`); // Debug visibility
-                horse.visible = true;
+            if (horse.x >= finishLine) {
+                if (!finishedHorses.includes(horse)) {
+                    finishedHorses.push(horse);
+                }
+                return;  // Skip movement for finished horses
             }
+            
+            allFinished = false;  // At least one horse hasn't finished
             
             // Update timer and progress
             horse.timer += deltaTime;
@@ -288,18 +292,48 @@ function startRace(horses, app) {
                 console.log(`Horse 0 position: ${horse.x}`);
             }
             
-            if (horse.x >= finishLine && !winner) {
-                winner = true;
-                console.log(`Winner found: Horse #${index + 1}`);
-                announceWinner(horse, index + 1);
-                raceBtn.disabled = false;
-                resetRace(horses);
+            if (horse.x >= finishLine) {
+                console.log(`Horse #${index + 1} finished!`);
             }
         });
+        
+        // Check if all horses except one have finished
+        if (finishedHorses.length >= horses.length - 1) {
+            console.log('All horses except one have finished!');
+            determineWinner(finishedHorses);
+            raceBtn.disabled = false;
+            resetRace(horses);
+            app.ticker.remove(currentGameLoop);
+        }
     };
     
     console.log('Adding ticker...');
     app.ticker.add(currentGameLoop);
+}
+
+function determineWinner(finishedHorses) {
+    // Check horses in order of finish for DQs
+    for (let i = 0; i < finishedHorses.length; i++) {
+        const horse = finishedHorses[i];
+        if (!checkForDQ(horse)) {
+            // Found our winner!
+            const horseNumber = activeHorses.indexOf(horse) + 1;
+            
+            // Announce DQs first
+            finishedHorses.slice(0, i).forEach(dqHorse => {
+                alert(`${dqHorse.name} has been disqualified for doping!`);
+            });
+            
+            // Then announce winner
+            alert(`${horse.name} (Horse #${horseNumber}) wins!`);
+            socket.emit('race end');
+            return;
+        }
+    }
+    
+    // If we get here, all horses were DQ'd!
+    alert('All horses have been disqualified! No winner declared!');
+    socket.emit('race end');
 }
 
 function calculateHorseSpeed(horse) {
@@ -331,9 +365,14 @@ function calculateHorseSpeed(horse) {
     }
 }
 
-function announceWinner(horse, horseNumber) {
-    alert(`${horse.name} (Horse #${horseNumber}) wins!`);
-    socket.emit('race end'); // Emit race end event
+function checkForDQ(horse) {
+    const stimCount = horse.stimCount || 0;
+    if (stimCount === 0) return false;
+    
+    // Calculate cumulative DQ chance: 1 - (0.75^stimCount)
+    // This gives: 1 stim = 25%, 2 stims = 43.75%, 3 stims = 57.8%, etc.
+    const dqChance = 1 - Math.pow(0.75, stimCount);
+    return Math.random() < dqChance;
 }
 
 function resetRace(horses) {
