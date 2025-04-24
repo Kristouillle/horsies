@@ -99,12 +99,6 @@
         cursor: not-allowed;
         pointer-events: none;
       }
-      
-      #mode-toggle {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-      }
 
       #wallet-display {
         position: fixed;
@@ -256,15 +250,6 @@
           });
         }
       }
-
-      // Add mode toggle handler
-      document.getElementById('mode-toggle')?.addEventListener('click', () => {
-        restrictedMode = !restrictedMode;
-        updateRestrictedStatus(); // Add this line
-        if (selectedAction) {
-          showHorseButtons(); // Refresh horse buttons if action is selected
-        }
-      });
 
       function showHorseButtons() {
         horseButtons.style.display = 'block';

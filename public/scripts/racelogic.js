@@ -323,6 +323,9 @@ function calculateHorseSpeed(horse) {
             const frontBoost = (1 - horse.progressRatio) * 2 * horse.personality.acceleration;
             return ((horse.baseSpeed + frontBoost + baseVariation) * staminaFactor) * multiplier;
             
+        case 'man':
+            return (0) * multiplier;
+                
         default:
             return horse.baseSpeed * multiplier;
     }
