@@ -119,7 +119,7 @@ export async function setupRace(pixiApp, horseCount) {
             horse.scale.set(0.5);
             
             const speedText = new PIXI.Text({
-                text: `${config.name} - Speed: 0`,
+                text: `${config.name} - Speed: 0 (Stims: ${config.stimCount || 0}, Sabotages: ${config.sabotageCount || 0})`,
                 style: {
                     fontFamily: 'Arial',
                     fontSize: 14,
@@ -202,15 +202,15 @@ function startRace(horses, app) {
     
     // Initialize horses with race-specific properties
     horses.forEach(horse => {
-        // Ensure stimCount exists and is a number
-        if (!horse.stimCount) horse.stimCount = 0;
-        // Ensure sabotageCount exists and is a number
-        if (!horse.sabotageCount) horse.sabotageCount = 0;
+        // Initialize counts if they don't exist
+        if (typeof horse.stimCount === 'undefined') horse.stimCount = 0;
+        if (typeof horse.sabotageCount === 'undefined') horse.sabotageCount = 0;
         
         horse.baseSpeed = Math.random() * 1 + 0.5;
         horse.timer = 0;
-        horse.speedMultiplier = 1 + (horse.stimCount * 0.5) - (horse.sabotageCount * 0.5); // Adjust speed based on stim/sabotage
-        horse.speed = horse.baseSpeed * horse.speedMultiplier; // Set initial speed
+        // Adjust multiplier based on stims and sabotages
+        horse.speedMultiplier = Math.max(0.2, 1 + (horse.stimCount * 0.2) - (horse.sabotageCount * 0.15));
+        horse.speed = horse.baseSpeed * horse.speedMultiplier;
         horse.progressRatio = 0;
         horse.visible = true;
         
@@ -310,7 +310,9 @@ function resetRace(horses) {
         horse.visible = true;
         horse.speedText.text = 'Speed: 0';
         horse.stimCount = 0; // Reset stim count
+        horse.sabotageCount = 0; // Reset sabotage count
         horse.speedMultiplier = 1;
+        updateHorseText(horse);
     });
 }
 
@@ -322,6 +324,12 @@ export function displayText(buttonText) {
     setTimeout(() => {
         actionText.text = '';
     }, 1000);
+}
+
+function updateHorseText(horse) {
+    if (horse.speedText) {
+        horse.speedText.text = `${horse.name} - Speed: ${horse.speed?.toFixed(1) || 0} (Stims: ${horse.stimCount || 0}, Sabotages: ${horse.sabotageCount || 0})`;
+    }
 }
 
 export function stim(horseName) {
@@ -343,7 +351,7 @@ export function stim(horseName) {
 
     // Increment stim count
     horse.stimCount++;
-    
+    updateHorseText(horse);
     console.log(`Stimulating horse ${horse.name}. New stim count: ${horse.stimCount}`);
 }
 
@@ -366,6 +374,6 @@ export function sabotage(horseName) {
 
     // Increment sabotage count
     horse.sabotageCount++;
-    
+    updateHorseText(horse);
     console.log(`Sabotageulating horse ${horse.name}. New sabotage count: ${horse.sabotageCount}`);
 }
