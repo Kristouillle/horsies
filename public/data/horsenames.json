@@ -2,11 +2,17 @@
     "prefixes": [
         "Swift", "Mighty", "Thunder", "Shadow", "Star", "Moon", "Sun", "Wind", "Storm",
         "Silver", "Golden", "Midnight", "Dawn", "Dusk", "Wild", "Royal", "Mystic", "Iron",
-        "Winter", "Summer", "Autumn", "Spring", "Noble", "Brave", "Fierce", "Proud"
+        "Winter", "Summer", "Autumn", "Spring", "Noble", "Brave", "Fierce", "Proud",
+        "Crimson", "Blazing", "Velvet", "Frozen", "Ivory", "Sable", "Ashen", "Bright",
+        "Ghost", "Phantom", "Emerald", "Onyx", "Copper", "Frost", "Steel", "Echo",
+        "Night", "Amber", "Cinder", "Glory", "Firelight", "Violet", "Tempest", "Twilight"
     ],
     "suffixes": [
         "Runner", "Spirit", "Heart", "Hooves", "Warrior", "Chaser", "Dancer", "Dreamer",
         "Racer", "Gallop", "Flash", "Dash", "Storm", "Wind", "Blaze", "Fire", "Fury",
-        "Knight", "Prince", "King", "Queen", "Lord", "Sage", "Walker", "Rider"
+        "Knight", "Prince", "King", "Queen", "Lord", "Sage", "Walker", "Rider",
+        "Howl", "Song", "Whisper", "Clash", "Strike", "Whirl", "Drift", "Tide",
+        "Flame", "Comet", "Path", "Mist", "Ray", "Gleam", "Gale", "Thunder",
+        "Shadow", "Glide", "Shine", "Spark", "Whip", "Echo", "Surge", "Vow"
     ]
 }
