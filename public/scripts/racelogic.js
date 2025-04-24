@@ -13,6 +13,15 @@ export async function setupRace(pixiApp, horseCount) {
     const urlParams = new URLSearchParams(window.location.search);
     const restrictedMode = urlParams.get('restricted') === 'true';
     
+    // Show race controls immediately
+    const raceControls = document.getElementById('race-controls');
+    if (raceControls) {
+        raceControls.classList.remove('hidden');
+    } else {
+        console.error('Race controls element not found');
+    }
+    
+    // Add socket handlers first
     socket.on('display text', (buttonText) => {
         displayText(buttonText);
     });
@@ -154,18 +163,23 @@ export async function setupRace(pixiApp, horseCount) {
         // After creating horses, emit their names, sprite paths, and restricted mode
         const horseData = horses.map(horse => ({
             name: horse.name,
-            spritePath: '/public/' + horseConfigs.horses.find(h => h.name === horse.name).spritePath.replace(/^\//, '')
+            spritePath: '/public/' + horseConfigs.horses.find(h => h.name === horse.name)?.spritePath.replace(/^\//, '') || 'horses/generic/brownhorse.png'
         }));
+
+        // Emit multiple times to ensure delivery
         socket.emit('horse names', horseData);
         socket.emit('race setup', { horses: horseData, restrictedMode });
         
-        // Show race button after setup
-        const raceControls = document.getElementById('race-controls');
-        raceControls.classList.remove('hidden');
+        // Broadcast to force update all clients
+        socket.emit('broadcast horse update', horseData);
         
         // Setup race button click handler
         const raceBtn = document.getElementById('race-btn');
-        raceBtn.addEventListener('click', () => startRace(horses, app));
+        if (raceBtn) {
+            raceBtn.addEventListener('click', () => startRace(horses, app));
+        } else {
+            console.error('Race button not found');
+        }
         
         // Create action text last to ensure it's on top
         actionText = new PIXI.Text('', {

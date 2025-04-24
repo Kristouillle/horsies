@@ -177,6 +177,13 @@ io.on('connection', (socket) => {
     socket.emit('wallet update', currentWallet + amount);
   });
 
+  socket.on('broadcast horse update', (data) => {
+    console.log('Broadcasting horse update to all clients:', data);
+    // Broadcast to all connected clients including sender
+    io.emit('horse names', data);
+    io.emit('show horse options', data);
+  });
+
 });
 
 server.listen(3000, () => {
