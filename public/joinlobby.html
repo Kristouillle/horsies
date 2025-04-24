@@ -93,11 +93,23 @@
         cursor: not-allowed;
         pointer-events: none;
       }
+
+      .horse-button.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+      
+      #mode-toggle {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+      }
     </style>
   </head>
   <body>
     <button id="home-btn" class="button">Home</button>
-    <div class="lobby-buttons">
+        <div class="lobby-buttons">
       <div id="action-text">
         <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
         <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
@@ -114,6 +126,8 @@
       let selectedAction = '';
       let horseData = [];  // Change from horseNames to horseData
       let raceInProgress = false;
+      let restrictedMode = true;
+      let usedActions = {}; // Track used actions per horse
 
       // Request horse names when page loads
       socket.emit('request horse names');
@@ -153,6 +167,8 @@
           });
         } else {
           // Reset everything when race ends
+          usedActions = {};  // Reset all used actions
+          horseButtons.style.display = 'none';  // Hide horse selection
           const images = document.querySelectorAll('.action-image');
           images.forEach(image => {
             image.classList.remove('disabled');
@@ -183,13 +199,32 @@
         }
       }
 
+      // Add mode toggle handler
+      document.getElementById('mode-toggle').addEventListener('click', () => {
+        restrictedMode = !restrictedMode;
+        if (selectedAction) {
+          showHorseButtons(); // Refresh horse buttons if action is selected
+        }
+      });
+
       function showHorseButtons() {
         horseButtons.style.display = 'block';
         horseButtons.innerHTML = '';
+        
+        // Initialize usedActions if needed
+        if (restrictedMode && !usedActions[selectedAction]) {
+          usedActions[selectedAction] = new Set();
+        }
+
         horseData.forEach(horse => {
           const button = document.createElement('button');
           button.className = 'button horse-button';
           
+          // Disable button if horse already used this action in restricted mode
+          if (restrictedMode && usedActions[selectedAction]?.has(horse.name)) {
+            button.classList.add('disabled');
+          }
+
           // Create horse sprite image with error handling
           const sprite = document.createElement('img');
           sprite.className = 'horse-sprite';
@@ -207,6 +242,10 @@
           button.appendChild(textSpan);
 
           button.addEventListener('click', () => {
+            if (restrictedMode && usedActions[selectedAction]?.has(horse.name)) {
+              return; // Prevent action if already used in restricted mode
+            }
+
             const actionMessage = `${selectedAction} on ${horse.name}`;
             switch(selectedAction) {
               case 'Stim':
@@ -220,6 +259,13 @@
                 socket.emit('cheat horse', horse.name);
                 break;
             }
+
+            // Track used action in restricted mode
+            if (restrictedMode) {
+              usedActions[selectedAction].add(horse.name);
+              showHorseButtons(); // Refresh to update disabled states
+            }
+
             socket.emit('horse selected', {
               horse: horse.name,
               action: selectedAction,
@@ -254,7 +300,6 @@
         });
         horseButtons.appendChild(backbutton);
       }
-
       
       //Routers
       document.getElementById('home-btn').addEventListener('click', () => {
