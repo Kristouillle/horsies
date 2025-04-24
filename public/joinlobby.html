@@ -122,6 +122,17 @@
       const socket = io();
       const actionText = document.getElementById('action-text');
       const horseButtons = document.getElementById('horse-buttons');
+      const homeButton = document.getElementById('home-btn');
+
+      // Add error handling for home button
+      if (!homeButton) {
+        console.error('Home button not found in DOM');
+      } else {
+        homeButton.addEventListener('click', () => {
+          console.log('Home button clicked');
+          window.location.href = '/';
+        });
+      }
 
       let selectedAction = '';
       let horseData = [];  // Change from horseNames to horseData
@@ -300,11 +311,6 @@
         });
         horseButtons.appendChild(backbutton);
       }
-      
-      //Routers
-      document.getElementById('home-btn').addEventListener('click', () => {
-        window.location.href = '/';
-      });
 
     </script>
   </body>
