@@ -4,12 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "node index.js",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.7",
     "express": "^4.21.2",
     "nodemon": "^3.1.9",
     "react": "^19.0.0",
