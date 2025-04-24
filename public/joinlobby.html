@@ -94,7 +94,7 @@
     <div class="lobby-buttons">
       <div id="action-text">
         <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
-        <img src="/public/menus/sabotage.png" class="action-image" data-action="Action 2" alt="Action 2">
+        <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
         <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
       </div>
       <div id="horse-buttons" style="display: none;"></div>
@@ -157,7 +157,7 @@
                 console.log('Sending stim for horse:', horse.name); // Add logging
                 socket.emit('stim horse', horse.name);
                 break;
-              case 'Action 2':
+              case 'Sabotage':
                 socket.emit('sabotage horse', horse.name);
                 break;
               case 'Action 3':
@@ -180,7 +180,7 @@
           horseButtons.style.display = 'none';
           actionText.innerHTML = `
             <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
-            <img src="/public/menus/sabotage.png" class="action-image" data-action="Action 2" alt="Action 2">
+            <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
             <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
           `;
           selectedAction = '';

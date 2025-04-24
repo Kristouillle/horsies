@@ -93,6 +93,11 @@ io.on('connection', (socket) => {
     io.emit('stim horse', name); // Broadcast to all clients
   });
 
+  socket.on('sabotage horse', (name) => {
+    console.log('Server received sabotage request for horse:', name);
+    io.emit('sabotage horse', name); // Broadcast to all clients
+  });
+
   socket.on('race start', () => {
     console.log('Race starting from server');
     // Broadcast race start to all connected clients
