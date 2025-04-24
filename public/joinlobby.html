@@ -105,9 +105,33 @@
         top: 10px;
         right: 10px;
       }
+
+      #wallet-display {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        border-radius: 5px;
+        color: gold;
+        font-size: 18px;
+        font-family: 'Schoolbell', cursive;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .coin-icon {
+        width: 40px;
+        height: 40px;
+      }
     </style>
   </head>
   <body>
+    <div id="wallet-display">
+      <img src="/public/menus/dollar.png" class="coin-icon" alt="Coins">
+      <span id="coin-amount">10</span>
+    </div>
     <button id="home-btn" class="button">Home</button>
     <span id="restricted-status" style="position: fixed; top: 50px; right: 10px; font-size: 18px; color: white;">
       Restricted: true
@@ -123,6 +147,18 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const socket = io();
+      let userCoins = 10;
+
+      // Add these new event handlers after socket initialization
+      socket.on('connect', () => {
+        socket.emit('request wallet');
+      });
+
+      socket.on('wallet update', (amount) => {
+        userCoins = amount;
+        document.getElementById('coin-amount').textContent = amount;
+      });
+
       const actionText = document.getElementById('action-text');
       const horseButtons = document.getElementById('horse-buttons');
       const homeButton = document.getElementById('home-btn');
@@ -269,6 +305,28 @@
               return; // Prevent action if already used in restricted mode
             }
 
+            let cost = 0;
+            switch(selectedAction) {
+              case 'Stim':
+                cost = 2;
+                break;
+              case 'Sabotage':
+                cost = 3;
+                break;
+              case 'Action 3':
+                cost = 5;
+                break;
+            }
+
+            if (userCoins < cost) {
+              alert('Not enough coins!');
+              return;
+            }
+
+            socket.emit('spend coins', cost);
+            userCoins -= cost; // Update local coin count
+            document.getElementById('coin-amount').textContent = userCoins; // Update display
+            
             const actionMessage = `${selectedAction} on ${horse.name}`;
             switch(selectedAction) {
               case 'Stim':
