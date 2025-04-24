@@ -9,6 +9,10 @@ export async function setupRace(pixiApp, horseCount) {
     app = pixiApp;
     socket = io();
     
+    // Get restricted mode from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const restrictedMode = urlParams.get('restricted') === 'true';
+    
     socket.on('display text', (buttonText) => {
         displayText(buttonText);
     });
@@ -147,13 +151,13 @@ export async function setupRace(pixiApp, horseCount) {
         }
         activeHorses = horses; // Store horses globally
         
-        // After creating horses, emit their names and sprite paths
+        // After creating horses, emit their names, sprite paths, and restricted mode
         const horseData = horses.map(horse => ({
             name: horse.name,
             spritePath: '/public/' + horseConfigs.horses.find(h => h.name === horse.name).spritePath.replace(/^\//, '')
         }));
         socket.emit('horse names', horseData);
-        socket.emit('race setup', horseData);
+        socket.emit('race setup', { horses: horseData, restrictedMode });
         
         // Show race button after setup
         const raceControls = document.getElementById('race-controls');

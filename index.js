@@ -14,6 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let currentRaceHorses = [];
 let isLobbyActive = false;  // Add this line
+let restrictedMode = true; // Add this line
 
 // Keep user "connection" alive through cookie
 app.use(cookieParser());
@@ -110,14 +111,17 @@ io.on('connection', (socket) => {
     io.emit('show horse options', data);  // Changed to emit show horse options instead
   });
 
-  socket.on('race setup', (horses) => {
-    console.log('Race horses set:', horses, `user_id:${socket.user_id}`);
-    currentRaceHorses = horses;
+  socket.on('race setup', (data) => {
+    console.log('Race setup received:', data);
+    currentRaceHorses = data.horses;
+    restrictedMode = data.restrictedMode;
+    console.log('Restricted mode set to:', restrictedMode);
   });
 
   socket.on('request horse names', () => {
-    console.log('Sending horse names:', currentRaceHorses, `user_id:${socket.user_id}`);
+    console.log('Sending horse names and settings:', currentRaceHorses, restrictedMode);
     socket.emit('horse names', currentRaceHorses);
+    socket.emit('restricted mode', restrictedMode);
   });
 
   socket.on('horse selected', (data) => {

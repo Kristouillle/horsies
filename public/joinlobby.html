@@ -109,7 +109,10 @@
   </head>
   <body>
     <button id="home-btn" class="button">Home</button>
-        <div class="lobby-buttons">
+    <span id="restricted-status" style="position: fixed; top: 50px; right: 10px; font-size: 18px; color: white;">
+      Restricted: true
+    </span>
+    <div class="lobby-buttons">
       <div id="action-text">
         <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
         <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
@@ -135,13 +138,21 @@
       }
 
       let selectedAction = '';
-      let horseData = [];  // Change from horseNames to horseData
+      let horseData = [];
       let raceInProgress = false;
-      let restrictedMode = true;
-      let usedActions = {}; // Track used actions per horse
+      let restrictedMode = true; // Default value
 
-      // Request horse names when page loads
+      // Remove the URL parameter check
+      socket.on('restricted mode', (mode) => {
+          console.log('Received restricted mode:', mode);
+          restrictedMode = mode;
+          document.getElementById('restricted-status').textContent = `Restricted: ${restrictedMode}`;
+      });
+
+      // Request horse names and settings when page loads
       socket.emit('request horse names');
+      
+      let usedActions = {}; // Track used actions per horse
 
       // Update horse data when received
       socket.on('horse names', (data) => {
@@ -211,8 +222,9 @@
       }
 
       // Add mode toggle handler
-      document.getElementById('mode-toggle').addEventListener('click', () => {
+      document.getElementById('mode-toggle')?.addEventListener('click', () => {
         restrictedMode = !restrictedMode;
+        updateRestrictedStatus(); // Add this line
         if (selectedAction) {
           showHorseButtons(); // Refresh horse buttons if action is selected
         }
