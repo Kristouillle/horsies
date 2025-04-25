@@ -137,6 +137,7 @@ export async function setupRace(pixiApp, horseCount) {
         for (let i = 0; i < draftedHorses.length; i++) {
             const config = draftedHorses[i];
             const horse = new PIXI.Sprite(textures[config.spritePath]);
+            horse.spritePath = config.spritePath; // Store the original sprite path
             horse.anchor.set(0.5); // Set anchor point to center
             horse.x = 50 + horse.width/2; // Adjust initial position to account for anchor
             horse.y = verticalSpacing * (i + 1);
@@ -312,27 +313,68 @@ function startRace(horses, app) {
 }
 
 function determineWinner(finishedHorses) {
-    // Check horses in order of finish for DQs
-    for (let i = 0; i < finishedHorses.length; i++) {
-        const horse = finishedHorses[i];
-        if (!checkForDQ(horse)) {
-            // Found our winner!
-            const horseNumber = activeHorses.indexOf(horse) + 1;
-            
-            // Announce DQs first
-            finishedHorses.slice(0, i).forEach(dqHorse => {
-                alert(`${dqHorse.name} has been disqualified for doping!`);
-            });
-            
-            // Then announce winner
-            alert(`${horse.name} (Horse #${horseNumber}) wins!`);
-            socket.emit('race end');
-            return;
+    const validFinishers = [];
+    const disqualified = [];
+
+    finishedHorses.forEach(horse => {
+        if (checkForDQ(horse)) {
+            disqualified.push(horse);
+        } else {
+            validFinishers.push(horse);
+        }
+    });
+
+    const scoreboard = document.getElementById('scoreboard');
+    const podium = {
+        first: { text: document.getElementById('first-text'), sprite: document.getElementById('first-sprite') },
+        second: { text: document.getElementById('second-text'), sprite: document.getElementById('second-sprite') },
+        third: { text: document.getElementById('third-text'), sprite: document.getElementById('third-sprite') }
+    };
+    const horseList = document.getElementById('horse-list');
+
+    horseList.innerHTML = '';
+
+    // Display podium finishers using stored sprite paths
+    if (validFinishers.length > 0) {
+        podium.first.text.textContent = validFinishers[0].name;
+        podium.first.sprite.src = validFinishers[0].spritePath;
+        
+        if (validFinishers.length > 1) {
+            podium.second.text.textContent = validFinishers[1].name;
+            podium.second.sprite.src = validFinishers[1].spritePath;
+        }
+        
+        if (validFinishers.length > 2) {
+            podium.third.text.textContent = validFinishers[2].name;
+            podium.third.sprite.src = validFinishers[2].spritePath;
         }
     }
-    
-    // If we get here, all horses were DQ'd!
-    alert('All horses have been disqualified! No winner declared!');
+
+    // Display full results list
+    validFinishers.slice(3).forEach((horse, index) => {
+        const place = index + 4;
+        horseList.innerHTML += `<div>${place}. ${horse.name}</div>`;
+    });
+
+    // Display DQs at the bottom
+    disqualified.forEach(horse => {
+        horseList.innerHTML += `<div>${horse.name} - DQ</div>`;
+    });
+
+    // Show scoreboard
+    scoreboard.style.display = 'block';
+
+    // Add button handlers
+    document.getElementById('race-again').addEventListener('click', () => {
+        scoreboard.style.display = 'none';
+        resetRace(activeHorses);
+        document.getElementById('race-btn').disabled = false;
+    });
+
+    document.getElementById('return-lobby').addEventListener('click', () => {
+        window.location.href = '/';
+    });
+
     socket.emit('race end');
 }
 
