@@ -301,6 +301,11 @@ function startRace(horses, app) {
         // Check if all horses except one have finished
         if (finishedHorses.length >= horses.length - 1) {
             console.log('All horses except one have finished!');
+            // Add remaining horse to finishedHorses
+            const remainingHorse = horses.find(h => !finishedHorses.includes(h));
+            if (remainingHorse) {
+                finishedHorses.push(remainingHorse);
+            }
             determineWinner(finishedHorses);
             raceBtn.disabled = false;
             resetRace(horses);
