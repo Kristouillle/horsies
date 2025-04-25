@@ -19,4 +19,5 @@ RUN cp dist/final.js . && \
     find . -mindepth 1 ! -name 'final.js' -delete
 
 EXPOSE 80
+
 CMD ["node","final.js"]
