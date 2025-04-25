@@ -363,7 +363,7 @@ function determineWinner(finishedHorses) {
 
     // Display DQs at the bottom
     disqualified.forEach(horse => {
-        horseList.innerHTML += `<div>${horse.name} - DQ</div>`;
+        horseList.innerHTML += `<div>${horse.name} - DQ for doping</div>`;
     });
 
     // Show scoreboard
