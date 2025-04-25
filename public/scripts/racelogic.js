@@ -176,16 +176,16 @@ export async function setupRace(pixiApp, horseCount) {
             const draftedHorse = draftedHorses.find(h => h.name === horse.name);
             return {
                 name: horse.name,
-                spritePath: draftedHorse?.spritePath || '/horses/generic/brownhorse.png'
+                spritePath: draftedHorse?.spritePath || '/horses/generic/brownhorse.png',
+                effects: {}
             };
         });
 
         // Emit multiple times to ensure delivery
-        socket.emit('horse names', horseData);
         socket.emit('race setup', { horses: horseData, restrictedMode });
         
         // Broadcast to force update all clients
-        socket.emit('broadcast horse update', horseData);
+        socket.emit('broadcast race update');
         
         // Setup race button click handler
         const raceBtn = document.getElementById('race-btn');

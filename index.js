@@ -5,6 +5,10 @@ import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Server } from 'socket.io';
+import { v4 } from 'uuid';
+import User from './public/models/User.js';
+import Lobby from './public/models/Lobby.js';
+const uuidv4 = v4;
 
 const app = express();
 const server = createServer(app);
@@ -12,10 +16,32 @@ const io = new Server(server);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-let currentRaceHorses = [];
-let isLobbyActive = false;  // Add this line
+const serverSessionToken = uuidv4();
+let lobby = new Lobby();
+lobby = new Lobby();
+lobby.horses = [
+  {
+    name: 'Chillhooves',
+    spritePath: '/horses/generic/warmbloods.png',
+    effects: {}
+  },
+  {
+    name: 'Sad horse',
+    spritePath: '/horses/specials/bojackhorse.png',
+    effects: {}
+  },
+  {
+    name: 'Summer Shine',
+    spritePath: '/horses/generic/americanquarter.png',
+    effects: {}
+  },
+  { name: 'Neighvana', spritePath: '/horses/generic/emohorse.png', effects: {} }
+];
+lobby.host = new User(100);
+// lobby = undefined;
+const users = {};
+
 let restrictedMode = true; // Add this line
-let userWallets = new Map(); // Add this line to track user wallets
 
 // Keep user "connection" alive through cookie
 app.use(cookieParser());
@@ -26,19 +52,22 @@ app.use(express.json());
 let session_id_counter = 1;
 
 app.use((req, res, next) => {
-  if (!req.cookies.user_id) {
-    const newId = session_id_counter++;
-    res.cookie('user_id', newId, {
+  if (!req.cookies.user_id || req.cookies.session_token !== serverSessionToken) {
+    const newId = session_id_counter++; // uuidv4();
+    var cookieSettings = {
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 // 1 day
-    });
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      sameSite: 'strict', // Or 'strict', depending on your setup
+      secure: false // Set to true if using HTTPS
+    };
+    res.cookie('user_id', newId, cookieSettings);
+    res.cookie('session_token', serverSessionToken, cookieSettings);
     req.user_id = newId;
-    userWallets.set(newId.toString(), 10); // Initialize wallet with 10 coins
+    req.session_token = serverSessionToken;
+    users[newId] = new User(newId);
   } else {
     req.user_id = req.cookies.user_id;
-    if (!userWallets.has(req.user_id.toString())) {
-      userWallets.set(req.user_id.toString(), 10); // Initialize wallet if not exists
-    }
+    req.session_token = req.cookies.session_token;
   }
   next();
 });
@@ -48,8 +77,10 @@ io.use((socket, next) => {
   if (rawCookies) {
     const cookies = parseCookie.parse(rawCookies);
     socket.user_id = cookies.user_id || -1; // fallback
+    // socket.session_token = cookies.session_token || -1; // fallback
   } else {
     socket.user_id = -1; // fallback
+    // socket.session_token = -1; // fallback
   }
   next();
 });
@@ -64,36 +95,59 @@ app.use('/', express.static('public')); // Add this line to serve files from roo
 app.use('/public/scripts', express.static('src/scripts'));
 
 io.on('connection', (socket) => {
-  console.log('New socket connected with token:', socket.user_id);
+  let myUser = TryGetMyUser(socket.user_id);
+  console.log('New socket connected with token:', myUser.id, myUser.name);
   
+  socket.join(myUser.id);
+
   // Send initial lobby status to new connections
-  socket.emit('lobby status', isLobbyActive);
+  socket.emit('lobby status', lobby != undefined);
+  socket.to('lobby').emit('race status', myUser, lobby);
 
   socket.on('create lobby', () => {
-    isLobbyActive = true;
-    console.log(`create lobby - isLobbyActive:${isLobbyActive} - user_id:${socket.user_id}`);
-    io.emit('lobby status', isLobbyActive);
+    console.log(`create lobby - isLobbyActive:${lobby} - user_id:${myUser.id}`);
+    if (!lobby && myUser.IsValid()) {
+      lobby = new Lobby(myUser);
+      console.log(lobby);
+      socket.join('host');
+      socket.emit('feedback', `Lobby created`);
+    }
+    io.emit('lobby status', lobby != undefined);
   });
 
   socket.on('close lobby', () => {
-    isLobbyActive = false;
-    console.log(`close lobby - isLobbyActive:${isLobbyActive} - user_id:${socket.user_id}`);
-    io.emit('lobby status', isLobbyActive);
+    console.log(`close lobby - isLobbyActive:${lobby} - user_id:${socket.user_id}`);
+    if (lobby && lobby.IsTheHost(myUser)) {
+      lobby = undefined;
+      socket.leave('host');
+      socket.emit('feedback', 'Lobby closed');
+    }
+    socket.emit('lobby status', lobby != undefined);
   });
   
   socket.on('disconnect', () => {
-    console.log(`user disconnected - user_id:${socket.user_id}`);
+    // console.log(`user disconnected - user_id:${socket.user_id}`);
   });
 
   socket.on('join lobby', () => {
-    console.log(`Player joined lobby - user_id:${socket.user_id}`);
-    socket.join('lobby');
-    socket.emit('lobby joined');
+    console.log(`Player joining lobby - user_id:${myUser.id}`);
+    console.log(lobby);
+    if (lobby) {
+      if (lobby.ParticiapantTriesToJoin(myUser)) {
+        socket.join('lobby');
+        io.emit('feedback', `Lobby joined ${myUser.id}`);
+        return;
+      }
+      io.emit('feedback', `Already in lobby ${myUser.id}`);
+    }
   });
 
   socket.on('leave lobby', () => {
-    console.log(`Player left lobby - user_id:${socket.user_id}`);
+    console.log(`leave lobby - user_id:${socket.user_id}`);
     socket.leave('lobby');
+    if (lobby) {
+      delete lobby.participants[myUser.id];
+    }
   });
 
   socket.on('player ready', () => {
@@ -108,40 +162,14 @@ io.on('connection', (socket) => {
 
   socket.on('button pressed', (buttonText) => {
     console.log(`Button pressed - user_id:${socket.user_id}`);
-    io.emit('display text', buttonText);
-  });
-
-  socket.on('horse names', (data) => {
-    console.log('Horse names received:', data, `user_id:${socket.user_id}`);
-    io.emit('show horse options', data);  // Changed to emit show horse options instead
+    // io.emit('display text', buttonText);
   });
 
   socket.on('race setup', (data) => {
     console.log('Race setup received:', data);
-    currentRaceHorses = data.horses;
+    lobby.horses = data.horses;
     restrictedMode = data.restrictedMode;
     console.log('Restricted mode set to:', restrictedMode);
-  });
-
-  socket.on('request horse names', () => {
-    console.log('Sending horse names and settings:', currentRaceHorses, restrictedMode);
-    socket.emit('horse names', currentRaceHorses);
-    socket.emit('restricted mode', restrictedMode);
-  });
-
-  socket.on('horse selected', (data) => {
-    console.log('Horse selected:', data, `user_id:${socket.user_id}`);
-    io.emit('display text', data.fullMessage);
-  });
-
-  socket.on('stim horse', (name) => {
-    console.log('Server received stim request for horse:', name);
-    io.emit('stim horse', name); // Broadcast to all clients
-  });
-
-  socket.on('sabotage horse', (name) => {
-    console.log('Server received sabotage request for horse:', name);
-    io.emit('sabotage horse', name); // Broadcast to all clients
   });
 
   socket.on('race start', () => {
@@ -155,37 +183,58 @@ io.on('connection', (socket) => {
     io.emit('race end');
   });
 
-  // Add these new event handlers
-  socket.on('request wallet', () => {
-    const wallet = userWallets.get(socket.user_id.toString()) || 10;
-    socket.emit('wallet update', wallet);
-  });
-
-  socket.on('spend coins', (amount) => {
-    const currentWallet = userWallets.get(socket.user_id.toString()) || 0;
-    if (currentWallet >= amount) {
-      userWallets.set(socket.user_id.toString(), currentWallet - amount);
-      socket.emit('wallet update', currentWallet - amount);
-      return true;
-    }
-    return false;
-  });
-
   socket.on('add coins', (amount) => {
-    const currentWallet = userWallets.get(socket.user_id.toString()) || 0;
-    userWallets.set(socket.user_id.toString(), currentWallet + amount);
-    socket.emit('wallet update', currentWallet + amount);
+    myUser.coins += amount;
+    io.to('lobby').emit('race status', myUser, lobby);
   });
 
-  socket.on('broadcast horse update', (data) => {
-    console.log('Broadcasting horse update to all clients:', data);
+  socket.on('action selected', (args) => {
+    if (lobby && args.horse && args.action) {
+      if (lobby.ParticiapantTriesToUseAction(myUser, args.horse, args.action)) {
+        io.to('host').emit('race update');
+      } else {
+        socket.emit('show banner', 'You are WAY too poor.');
+      }
+    }
+  });
+
+  socket.on('broadcast race update', () => {
+    console.log('Broadcasting race update to all clients:');
     // Broadcast to all connected clients including sender
-    io.emit('horse names', data);
-    io.emit('show horse options', data);
+    socket.to('lobby').emit('race status', myUser, lobby);
   });
-
+  
+  socket.on('request lobby redirect', () => {
+    if (lobby) {
+      console.log(lobby.participants);
+      if (lobby.IsTheHost(myUser)) {
+        socket.emit('redirect to lobby', '/public/game.html');
+      } else if (lobby.IsAParticipant(myUser)) {
+        socket.emit('redirect to lobby', '/public/joinlobby.html');
+      }
+    }
+  });
+  
+  socket.on('request race status', () => {
+    console.log(`Request race status`);
+    console.log(lobby.participants);
+    console.log(users);
+    console.log(myUser);
+    if (lobby) {
+      if (lobby.IsTheHost(myUser) || lobby.IsAParticipant(myUser)) {
+        socket.emit('race status', myUser, lobby);
+      }
+    }
+  });
 });
 
 server.listen(3000, () => {
   console.log('server running at http://localhost:3000');
 });
+
+function TryGetMyUser(user_id) {
+  let user = users[user_id];
+  if (user)
+    return user
+  return new User(-1);
+}

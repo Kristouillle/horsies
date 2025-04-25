@@ -8,7 +8,11 @@
         font-family: 'Schoolbell';
         src: url('/public/fonts/Schoolbell-Regular.ttf') format('truetype');
       }
-      
+
+      .hidden {
+        display: none;
+      }
+
       body {
         margin: 0;
         padding: 0;
@@ -119,17 +123,49 @@
         width: 40px;
         height: 40px;
       }
+
+      #banner {
+        position: fixed;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 50px;
+        display: none; /* Start hidden */
+        z-index: 1000;
+      }
     </style>
   </head>
   <body>
+
+    <div id="banner"></div>
+
+    <!-- wallet -->
     <div id="wallet-display">
       <img src="/public/menus/dollar.png" class="coin-icon" alt="Coins">
-      <span id="coin-amount">10</span>
+      <span id="coin-amount">0</span>
     </div>
-    <button id="home-btn" class="button">Home</button>
-    <span id="restricted-status" style="position: fixed; top: 50px; right: 10px; font-size: 18px; color: white;">
-      Restricted: true
-    </span>
+
+    <div id="set-up">
+      <button id="home-btn" class="button">Home</button>
+      <!-- name -->
+      <!-- <input type="text"> -->
+      <!-- bet value -->
+      <!-- horse to bet on -->
+    </div>
+    
+    <div id="in-race">
+      <!-- actions -->
+    </div>
+    
+    <div id="race-results">
+      <!-- winnings ! -->
+      <div id="results"></div>
+    </div>
+
     <div class="lobby-buttons">
       <div id="action-text">
         <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
@@ -140,22 +176,54 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      const socket = io();
-      let userCoins = 10;
+      const SET_UP = 'set up';
+      const IN_PROGRESS = 'in progress';
+      const DONE = 'done';
 
-      // Add these new event handlers after socket initialization
-      socket.on('connect', () => {
-        socket.emit('request wallet');
-      });
-
-      socket.on('wallet update', (amount) => {
-        userCoins = amount;
-        document.getElementById('coin-amount').textContent = amount;
-      });
-
+      const setUpSection = document.getElementById('set-up');
+      const inRaceSection = document.getElementById('in-race');
+      const raceResultsSection = document.getElementById('race-results');
+      const resultsSection = document.getElementById('results');
+      const walletDisplay = document.getElementById('wallet-display');
+      const coinAmountDisplay = document.getElementById('coin-amount');
       const actionText = document.getElementById('action-text');
       const horseButtons = document.getElementById('horse-buttons');
       const homeButton = document.getElementById('home-btn');
+      const banner = document.getElementById('banner');
+
+      const socket = io();
+
+      let myUser = undefined;
+      let lobby = undefined;
+      let selectedAction = '';
+      let raceInProgress = false;
+      let restrictedMode = true; // Default value
+      let usedActions = {}; // Track used actions per horse
+
+      // Add these new event handlers after socket initialization
+      socket.on('connect', () => {
+        socket.emit("request race status");
+      });
+
+      socket.on('race status', (newUser, newLobby) => {
+        myUser = newUser;
+        lobby = newLobby;
+        const status = lobby.status;
+
+        coinAmountDisplay.innerHTML = myUser.coins;
+
+        setUpSection.classList.add('hidden');
+        inRaceSection.classList.add('hidden');
+        raceResultsSection.classList.add('hidden');
+        walletDisplay.classList.add('hidden');
+        if (status === SET_UP) {
+          initRaceSetUp();
+        } else if (status === IN_PROGRESS) {
+          initRaceInProgress();
+        } else if (status === DONE) {
+          initRaceDone();
+        }
+      });
 
       // Add error handling for home button
       if (!homeButton) {
@@ -163,30 +231,16 @@
       } else {
         homeButton.addEventListener('click', () => {
           console.log('Home button clicked');
+          socket.emit('leave lobby');
           window.location.href = '/';
         });
       }
 
-      let selectedAction = '';
-      let horseData = [];
-      let raceInProgress = false;
-      let restrictedMode = true; // Default value
-
       // Remove the URL parameter check
       socket.on('restricted mode', (mode) => {
-          console.log('Received restricted mode:', mode);
-          restrictedMode = mode;
-          document.getElementById('restricted-status').textContent = `Restricted: ${restrictedMode}`;
-      });
-
-      // Request horse names and settings when page loads
-      socket.emit('request horse names');
-      
-      let usedActions = {}; // Track used actions per horse
-
-      // Update horse data when received
-      socket.on('horse names', (data) => {
-        horseData = data;
+        console.log('Received restricted mode:', mode);
+        restrictedMode = mode;
+        document.getElementById('restricted-status').textContent = `Restricted: ${restrictedMode}`;
       });
 
       // Action images
@@ -194,7 +248,6 @@
       images.forEach((image) => {
         image.addEventListener('click', () => {
           selectedAction = image.dataset.action;
-          socket.emit('button pressed', selectedAction);
           actionText.textContent = `Selected: ${selectedAction}`;
           showHorseButtons();
         });
@@ -210,45 +263,71 @@
         toggleActionButtons();
       });
 
-      function toggleActionButtons() {
-        if (raceInProgress) {
-          horseButtons.style.display = 'none';
-          const images = document.querySelectorAll('.action-image');
-          images.forEach(image => {
-            image.classList.add('disabled');
+      socket.on('show banner', (message) => {
+        showBanner(message);
+      });
+
+      function initRaceSetUp() {
+        raceInProgress = false;
+        setUpSection.classList.remove('hidden');
+        walletDisplay.classList.remove('hidden');
+
+        // Reset everything when race ends
+        usedActions = {};  // Reset all used actions
+        horseButtons.style.display = 'none';  // Hide horse selection
+        const images = document.querySelectorAll('.action-image');
+        images.forEach(image => {
+          image.classList.remove('disabled');
+        });
+        
+        // Clear any selected action
+        selectedAction = '';
+        
+        // Reset the action text to original state with images
+        actionText.innerHTML = `
+          <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
+          <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
+          <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
+        `;
+        
+        // Reattach event listeners to new images
+        const newImages = actionText.querySelectorAll('.action-image');
+        newImages.forEach((image) => {
+          image.addEventListener('click', () => {
+            if (!raceInProgress) {  // Double check race isn't in progress
+              selectedAction = image.dataset.action;
+              // socket.emit('button pressed', selectedAction);
+              actionText.textContent = `Selected: ${selectedAction}`;
+              showHorseButtons();
+            }
           });
-        } else {
-          // Reset everything when race ends
-          usedActions = {};  // Reset all used actions
-          horseButtons.style.display = 'none';  // Hide horse selection
-          const images = document.querySelectorAll('.action-image');
-          images.forEach(image => {
-            image.classList.remove('disabled');
-          });
-          
-          // Clear any selected action
-          selectedAction = '';
-          
-          // Reset the action text to original state with images
-          actionText.innerHTML = `
-            <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
-            <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
-            <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
-          `;
-          
-          // Reattach event listeners to new images
-          const newImages = actionText.querySelectorAll('.action-image');
-          newImages.forEach((image) => {
-            image.addEventListener('click', () => {
-              if (!raceInProgress) {  // Double check race isn't in progress
-                selectedAction = image.dataset.action;
-                socket.emit('button pressed', selectedAction);
-                actionText.textContent = `Selected: ${selectedAction}`;
-                showHorseButtons();
-              }
-            });
-          });
-        }
+        });
+      }
+      
+      function initRaceInProgress() {
+        raceInProgress = true;
+        inRaceSection.classList.remove('hidden');
+        walletDisplay.classList.remove('hidden');
+        horseButtons.style.display = 'none';
+        const images = document.querySelectorAll('.action-image');
+        images.forEach(image => {
+          image.classList.add('disabled');
+        });
+      }
+
+      function initRaceDone() {
+        raceInProgress = false;
+        raceResultsSection.classList.remove('hidden');
+        resultsSection.innerHTML = 'Race over !'; // lobby.GetResults();
+      }
+
+      function showBanner(message) {
+        banner.textContent = message;
+        banner.style.display = 'block';
+
+        setTimeout(() => {
+          banner.style.display = 'none';
+        }, 2000); // 2000 milliseconds = 2 seconds
       }
 
       function showHorseButtons() {
@@ -260,7 +339,7 @@
           usedActions[selectedAction] = new Set();
         }
 
-        horseData.forEach(horse => {
+        lobby.horses.forEach(horse => {
           const button = document.createElement('button');
           button.className = 'button horse-button';
           
@@ -300,53 +379,18 @@
               return; // Prevent action if already used in restricted mode
             }
 
-            let cost = 0;
-            switch(selectedAction) {
-              case 'Stim':
-                cost = 2;
-                break;
-              case 'Sabotage':
-                cost = 3;
-                break;
-              case 'Action 3':
-                cost = 5;
-                break;
-            }
-
-            if (userCoins < cost) {
-              alert('Not enough coins!');
-              return;
-            }
-
-            socket.emit('spend coins', cost);
-            userCoins -= cost; // Update local coin count
-            document.getElementById('coin-amount').textContent = userCoins; // Update display
-            
-            const actionMessage = `${selectedAction} on ${horse.name}`;
-            switch(selectedAction) {
-              case 'Stim':
-                console.log('Sending stim for horse:', horse.name); // Add logging
-                socket.emit('stim horse', horse.name);
-                break;
-              case 'Sabotage':
-                socket.emit('sabotage horse', horse.name);
-                break;
-              case 'Action 3':
-                socket.emit('cheat horse', horse.name);
-                break;
-            }
-
             // Track used action in restricted mode
             if (restrictedMode) {
               usedActions[selectedAction].add(horse.name);
               showHorseButtons(); // Refresh to update disabled states
             }
 
-            socket.emit('horse selected', {
+            socket.emit('action selected', {
               horse: horse.name,
-              action: selectedAction,
-              fullMessage: actionMessage
+              action: selectedAction
             });
+            backbutton.click();
+            socket.emit("request race status");
           });
           horseButtons.appendChild(button);
         });
@@ -368,9 +412,10 @@
           newImages.forEach((image) => {
             image.addEventListener('click', () => {
               selectedAction = image.dataset.action;
-              socket.emit('button pressed', selectedAction);
+              // socket.emit('button pressed', selectedAction);
               actionText.textContent = `Selected: ${selectedAction}`;
               showHorseButtons();
+              // socket.emit("request race status");
             });
           });
         });
