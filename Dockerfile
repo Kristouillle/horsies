@@ -1,15 +1,22 @@
 # Build stage
 FROM node:18-slim
 
-RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
+# Copy package files first to leverage Docker cache
 COPY package*.json ./
-
 RUN npm install
+
+# Copy all source files
+COPY . .
+
+# Build the application
 RUN npm run buildweb
 
-COPY dist/final.js .
+# Keep only the built file and clean up
+RUN cp dist/final.js . && \
+    rm -rf dist && \
+    find . -mindepth 1 ! -name 'final.js' -delete
 
 EXPOSE 80
 CMD ["node","final.js"]

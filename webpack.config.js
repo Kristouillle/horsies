@@ -8,15 +8,16 @@ export default {
   mode: 'production',
   entry: './index.js',
   output: {
-    path: path.join(__dirname, 'dist'),
-    publicPath: '/',
+    path: path.resolve(__dirname, 'dist'),
     filename: 'final.js',
+    clean: true
   },
   target: 'node',
   resolve: {
     fallback: {
       "bufferutil": false,
       "utf-8-validate": false
-    }
+    },
+    extensions: ['.js', '.jsx', '.json']
   }
 };
