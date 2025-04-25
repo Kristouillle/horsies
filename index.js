@@ -54,8 +54,10 @@ io.use((socket, next) => {
   next();
 });
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/', (req, res) => {
-  res.sendFile(join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Serve static files from the 'public' directory
@@ -187,5 +189,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(80, () => {
-  console.log('server running at http://localhost:3000');
+  console.log('server running at http://localhost:80');
 });
