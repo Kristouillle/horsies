@@ -6,13 +6,13 @@
     <style>
       @font-face {
         font-family: 'Schoolbell';
-        src: url('/public/fonts/Schoolbell-Regular.ttf') format('truetype');
+        src: url('/fonts/Schoolbell-Regular.ttf') format('truetype');
       }
 
       body {
         margin: 0;
         padding: 0;
-        background-image: url('/public/menus/bg.png');
+        background-image: url('/menus/bg.png');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -39,7 +39,7 @@
 
       .button {
         background-color: transparent;
-        background-image: url('/public/menus/button.png');
+        background-image: url('/menus/button.png');
         background-size: 100% 100%;
         background-position: center;
         background-repeat: no-repeat;
@@ -121,8 +121,8 @@
   </head>
   <body>
     <div id="lobby-buttons" class="lobby-buttons">
-      <img id="create-lobby" src="/public/menus/createlobby.png" class="lobby-button-img" alt="Create Lobby">
-      <img id="join-lobby" src="/public/menus/joinlobby.png" class="lobby-button-img" alt="Join Lobby">
+      <img id="create-lobby" src="/menus/createlobby.png" class="lobby-button-img" alt="Create Lobby">
+      <img id="join-lobby" src="/menus/joinlobby.png" class="lobby-button-img" alt="Join Lobby">
     </div>
 
     <div id="create-menu" class="lobby-menu hidden">
@@ -144,7 +144,7 @@
       <button id="back-to-create" class="button">Back</button>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js" ></script>
     <script>
       const lobbyButtons = document.getElementById('lobby-buttons');
       const createMenu = document.getElementById('create-menu');
@@ -186,7 +186,7 @@
         sliderMenu.classList.add('hidden');
         socket.emit('create lobby');
         const restrictedMode = document.getElementById('restricted-mode').checked;
-        window.location.href = `/public/game.html?players=${playerCount.value}&restricted=${restrictedMode}`;
+        window.location.href = `/game.html?players=${playerCount.value}&restricted=${restrictedMode}`;
       });
 
       socket.on('lobby status', (isActive) => {
@@ -200,7 +200,7 @@
       });
 
       document.getElementById('join-lobby').addEventListener('click', () => {
-        window.location.href = '/public/joinlobby.html';
+        window.location.href = '/joinlobby.html';
       });
     </script>
   </body>
