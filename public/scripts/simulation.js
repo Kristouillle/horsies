@@ -33,10 +33,17 @@ export async function simulate() {
     // console.log(horseConfigs);
     
     // create one horse for each behavior
-    for (let index = 0; index < 20; index++) {
+    for (let index = 0; index < 100; index++) {
       for (let i = 0; i < horseConfigs.length + 5; i++) {
         for (let j = 0; j < BEHAVIORS.length; j++) {
           const horse = i < horseConfigs.length  ? horseConfigs[i] : createHorse(i);
+
+          if (horse.behavior == 'man')
+            continue;
+
+          if (horse.name == 'Just a horse, nothing to see here')
+            horse.name = 'Just a horse'
+
           const clone = { ...horse };
           clone.behavior = BEHAVIORS[j];
           clone.baseSpeed = Math.random() * 1 + 0.5;
@@ -55,11 +62,9 @@ export async function simulate() {
     // console.log(simulation_horses);
     // for each horse run the race (a few times) and note down time to complete (maybe position at time x)
 
-    start_race_time = performance.now();
-    lastTime = performance.now();
+    totalTime = 0;
     while(number_of_finished_horses < simulation_horses.length) {
-      raceUpdate(simulation_horses);
-      await sleep(1000);
+      raceUpdate(simulation_horses, 250);
     }
 
     // output finish info
@@ -137,18 +142,16 @@ function calculateHorseSpeed(horse) {
   }
 }
 
-let start_race_time = performance.now();
 let number_of_finished_horses = 0;
-let lastTime = 0;
 let finishLine = 2000;
 let iteration_number = 0;
+let totalTime = 0;
 
-function raceUpdate(horses) {
+function raceUpdate(horses, deltaMs) {
   iteration_number++;
   number_of_finished_horses = 0;
-  const currentTime = performance.now();
-  const deltaTime = (currentTime - lastTime) / 1000;
-  lastTime = currentTime;
+  totalTime += deltaMs;
+  const deltaTime = deltaMs / 1000;
   let last_horse_position = horses[0].x;
 
   horses.forEach((horse, index) => {
@@ -168,29 +171,29 @@ function raceUpdate(horses) {
     last_horse_position = Math.min(last_horse_position, horse.x);
 
     if (horse.time_at_500 == 0 && horse.x >= 500) {
-      horse.time_at_500 = currentTime - start_race_time;
+      horse.time_at_500 = totalTime;
     }
 
     if (horse.time_at_1000 == 0 && horse.x >= 1000) {
-      horse.time_at_1000 = currentTime - start_race_time;
+      horse.time_at_1000 = totalTime;
     }
 
     if (horse.time_at_1500 == 0 && horse.x >= 1500) {
-      horse.time_at_1500 = currentTime - start_race_time;
+      horse.time_at_1500 = totalTime;
     }
 
     if (horse.time_at_2000 == 0 && horse.x >= 2000) {
-      horse.time_at_2000 = currentTime - start_race_time;
+      horse.time_at_2000 = totalTime;
     }
 
     if (horse.x >= finishLine) {
-      horse.finishTime = currentTime - start_race_time;
+      horse.finishTime = totalTime;
     }
   });
   
   // if (iteration_number % 10000 === 0) {
     // console.log(`updated race ${currentTime}, ${deltaTime}`);
     // console.log(`horse ${horses[0].x} ${horses[0].speed} ${horses[0].behavior}`);
-    console.log(`race updated - ${currentTime} - ${number_of_finished_horses} / ${horses.length} horses done - last horse is at ${last_horse_position}`);
+    console.log(`race updated - ${totalTime} - ${number_of_finished_horses} / ${horses.length} horses done - last horse is at ${last_horse_position}`);
   // }
 }
