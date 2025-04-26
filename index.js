@@ -142,6 +142,7 @@ io.on('connection', (socket) => {
   });
   socket.on('race setup', (data) => {
     console.log('Race setup received:', data);
+    lobby.status = Lobby.SET_UP;
     lobby.horses = data.horses;
     lobby.isRestrictedMode = data.restrictedMode;
     console.log('Restricted mode set to:', restrictedMode);
@@ -160,6 +161,10 @@ io.on('connection', (socket) => {
     console.log('Race ended');
     lobby.EndRace(myUser);
     io.emit('race end');
+  });
+  socket.on('reset race', () => {
+    console.log('reseting race');
+    lobby.resetRace(myUser);
   });
   socket.on('add coins', (amount) => {
     myUser.coins += amount;

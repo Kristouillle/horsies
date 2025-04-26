@@ -29,6 +29,56 @@
       .hidden {
         display: none;
       }
+
+      .scoreboard-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            font-family: 'Schoolbell', cursive;
+        }
+
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .podium-place {
+            margin: 0 10px;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .podium-sprite {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+        }
+
+        #second-place { height: 80px; color: #c0c0c0 }
+        #first-place { height: 100px; color: #ffd700 }
+        #third-place { height: 60px; color: #cd7f32 }
+
+        .horse-list {
+            overflow-y: auto;
+            margin-top: 110px;
+        }
+
+        .button-container {
+            margin-top: 40px;
+        }
     </style>
   </head>
   <body>
@@ -36,6 +86,28 @@
     <div id="race-controls" class="hidden">
       <button id="race-btn" class="button">Race!</button>
     </div>
+    <div id="scoreboard" class="scoreboard-overlay">
+      <h2>Race Results</h2>
+      <div class="podium">
+          <div id="second-place" class="podium-place">
+              <img class="podium-sprite" id="second-sprite">
+              <div id="second-text">2nd</div>
+          </div>
+          <div id="first-place" class="podium-place">
+              <img class="podium-sprite" id="first-sprite">
+              <div id="first-text">1st</div>
+          </div>
+          <div id="third-place" class="podium-place">
+              <img class="podium-sprite" id="third-sprite">
+              <div id="third-text">3rd</div>
+          </div>
+      </div>
+      <div class="horse-list" id="horse-list"></div>
+      <div class="button-container">
+          <button id="race-again" class="button">Race Again</button>
+          <!-- <button id="return-lobby" class="button">Return to Lobby</button> -->
+      </div>
+  </div>
     
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://pixijs.download/release/pixi.js"></script>
@@ -55,7 +127,6 @@
       // document.getElementById('home-btn').addEventListener('click', () => {
       //   window.location.href = '/';
       // });
-      
     </script>
   </body>
 </html>

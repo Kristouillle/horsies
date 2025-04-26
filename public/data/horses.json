@@ -102,12 +102,92 @@
     {
       "name": "Sad horse",
       "spritePath": "/horses/specials/bojackhorse.png",
-      "rarity": 2,
+      "rarity": 3,
+      "behavior": "frontrunner",
       "personality": {
         "acceleration": 1.2,
         "consistency": 0.65,
         "burstChance": 1.2,
         "stamina": 0.80
+      }
+    },
+      {
+        "name": "Merry Mary",
+        "spritePath": "/horses/specials/merry.png",
+        "rarity": 3,
+        "behavior": "steady",
+        "personality": {
+          "acceleration": 1.10,
+          "consistency": 1.00,
+          "burstChance": 0.90,
+          "stamina": 0.95
+        }
+      },
+    {
+        "name": "Ironstorm",
+        "spritePath": "/horses/specials/h0rs3.png",
+        "rarity": 4,
+        "personality": {
+          "acceleration": 1.25,
+          "consistency": 0.80,
+          "burstChance": 0.88,
+          "stamina": 1.10
+        }
+      },
+      {
+        "name": "Rainbow Bash",
+        "spritePath": "/horses/specials/rainbowdash.png",
+        "rarity": 4,
+        "personality": {
+          "acceleration": 1.30,
+          "consistency": 0.85,
+          "burstChance": 1.25,
+          "stamina": 1.00
+        }
+      },
+      {
+        "name": "Just a horse, nothing to see here",
+        "spritePath": "/horses/specials/trojan.png",
+        "rarity": 4,
+        "personality": {
+          "acceleration": 1.20,
+          "consistency": 1.10,
+          "burstChance": 0.95,
+          "stamina": 1.00
+        }
+      },
+      {
+        "name": "Moonrider",
+        "spritePath": "/horses/specials/pegasus.png",
+        "rarity": 5,
+        "personality": {
+          "acceleration": 1.25,
+          "consistency": 0.92,
+          "burstChance": 1.05,
+          "stamina": 1.10
+        }
+      },
+      {
+        "name": "Unicorn",
+        "spritePath": "/horses/specials/unicorn.png",
+        "rarity": 5,
+        "personality": {
+          "acceleration": 1.40,
+          "consistency": 1.05,
+          "burstChance": 1.15,
+          "stamina": 1.10
+        }
+      },
+    {
+      "name": "Man but the horse",
+      "spritePath": "/horses/specials/man.png",
+      "rarity": 5,
+      "behavior": "man",
+      "personality": {
+        "acceleration": 0,
+        "consistency": 0,
+        "burstChance": 0,
+        "stamina": 0
       }
     }
   ]

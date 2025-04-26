@@ -141,6 +141,7 @@ class Lobby {
 
   resetRace() {
     console.log('Resetting race...');
+    this.status = Lobby.SET_UP;
     
     for (let i = 0; i < this.participants.length; i++) {
       const participant = this.participants[i];
@@ -148,7 +149,6 @@ class Lobby {
     }
 
     this.horses.forEach(horse => {
-      horse.x = 50;
       horse.stimCount = 0; // Reset stim count
       horse.sabotageCount = 0; // Reset sabotage count
     });
