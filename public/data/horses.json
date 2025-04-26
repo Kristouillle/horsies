@@ -103,24 +103,11 @@
       "name": "Sad horse",
       "spritePath": "/horses/specials/bojackhorse.png",
       "rarity": 2,
-      "behavior": "frontrunner",
       "personality": {
         "acceleration": 1.2,
         "consistency": 0.65,
         "burstChance": 1.2,
         "stamina": 0.80
-      }
-    },
-    {
-      "name": "Man but the horse",
-      "spritePath": "/horses/specials/man.png",
-      "rarity": 5,
-      "behavior": "man",
-      "personality": {
-        "acceleration": 0,
-        "consistency": 0,
-        "burstChance": 0,
-        "stamina": 0
       }
     }
   ]

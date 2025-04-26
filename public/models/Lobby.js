@@ -22,6 +22,7 @@ class Lobby {
     this.raceTrackLength = Lobby.DEFAULT_TRACK_LENGTH;
     this.horses = [];
     this.bets = {};
+    this.isRestrictedMode = false;
 
     this.power_queue = [];
   }
@@ -66,6 +67,7 @@ class Lobby {
     console.log(participant);
     console.log(this.status);
     if (this.IsInSetup() && Object.keys(this.participants).length < Lobby.MAX_PARTICIPANTS) {
+      participant.coins = 10;
       this.participants[participant.id] = [participant];
       return true;
     }
@@ -88,7 +90,16 @@ class Lobby {
         const horse = this.horses[i];
         if (horse.name === horseName) {
           participant.coins -= cost;
-          horse.effects[action] = (horse.effects[action] || 0) + 1;
+
+          if (action == 'Stim') {
+            horse.stimCount++;
+          }
+
+          if (action == 'Sabotage') {
+            horse.sabotageCount++;
+          }
+          console.log(horse)
+          // horse.effects[action] = (horse.effects[action] || 0) + 1;
           return true;
         }
       }
@@ -104,15 +115,21 @@ class Lobby {
   StartRace(myUser) {
     if (this.IsInSetup() && this.host.id === myUser.id) {
       this.status = Lobby.IN_PROGRESS;
-      this.race;
       return true;
     }
     return false;
   }
   
-  SetResults(results) {
-    this.results = results;
-    this.results.sort((x) => { return -x.distance; });
+  EndRace(myUser) {
+    if (this.IsInProgress() && this.host.id === myUser.id) {
+      this.status = Lobby.DONE;
+      return true;
+    }
+    return false;
+  }
+  
+  ReturnToWaiting() {
+    this.resetRace();
   }
 
   IsTheHost(user) {
@@ -122,14 +139,21 @@ class Lobby {
     return this.participants[user.id] != undefined;
   }
 
-  // GetResults() {
-  //   let resultString = '';
-  //   for (let j = 0; j < this.results.length; j++) {
-  //     const result = this.results;
-  //     resultString += `#${j+1} ${result[j].name}\n`;
-  //   }
-  //   return resultString;
-  // }
+  resetRace() {
+    console.log('Resetting race...');
+    
+    for (let i = 0; i < this.participants.length; i++) {
+      const participant = this.participants[i];
+      participant.coins = 10;
+    }
+
+    this.horses.forEach(horse => {
+      horse.x = 50;
+      horse.stimCount = 0; // Reset stim count
+      horse.sabotageCount = 0; // Reset sabotage count
+    });
+  }
+
 }
 
 export default Lobby;

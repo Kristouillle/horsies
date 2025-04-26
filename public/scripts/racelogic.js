@@ -26,14 +26,21 @@ export async function setupRace(pixiApp, horseCount) {
         displayText(buttonText);
     });
     
-    socket.on('stim horse', (name) => {
-        stim(name);
+    // Add socket handlers first
+    socket.on('race update', (data) => {
+        console.log('race update', data)
+        //dont show stims before race starts?
+        activeHorses.forEach(horse => {
+            let remoteHorse = data.horses.filter(x => x.name == horse.name)[0];
+            if (remoteHorse) {
+                // Initialize counts if they don't exist
+                horse.stimCount = remoteHorse.stimCount;
+                horse.sabotageCount = remoteHorse.sabotageCount;
+            }
+            updateHorseText(horse);
+        });
     });
     
-    socket.on('sabotage horse', (name) => {
-        sabotage(name);
-    });
-
     try {
         // Load horse configurations and names
         const [horseConfigs, nameBank] = await Promise.all([
@@ -140,6 +147,15 @@ export async function setupRace(pixiApp, horseCount) {
             horse.anchor.set(0.5); // Set anchor point to center
             horse.x = 50 + horse.width/2; // Adjust initial position to account for anchor
             horse.y = verticalSpacing * (i + 1);
+            horse.stimCount = 0;
+            horse.sabotageCount = 0;
+            horse.baseSpeed = Math.random() * 1 + 0.5;
+            horse.timer = 0;
+            // Adjust multiplier based on stims and sabotages
+            horse.speedMultiplier = Math.max(0.2, 1 + (horse.stimCount * 0.2) - (horse.sabotageCount * 0.15));
+            horse.speed = horse.baseSpeed * horse.speedMultiplier;
+            horse.progressRatio = 0;
+            horse.visible = true;
             horse.scale.set(0.5);
             
             const speedText = new PIXI.Text({
@@ -177,7 +193,8 @@ export async function setupRace(pixiApp, horseCount) {
             return {
                 name: horse.name,
                 spritePath: draftedHorse?.spritePath || '/horses/generic/brownhorse.png',
-                effects: {}
+                stimCount: horse.stimCount,
+                sabotageCount: horse.sabotageCount,
             };
         });
 
@@ -190,7 +207,7 @@ export async function setupRace(pixiApp, horseCount) {
         // Setup race button click handler
         const raceBtn = document.getElementById('race-btn');
         if (raceBtn) {
-            raceBtn.addEventListener('click', () => startRace(horses, app));
+            raceBtn.addEventListener('click', () => startRace(app));
         } else {
             console.error('Race button not found');
         }
@@ -216,99 +233,112 @@ export async function setupRace(pixiApp, horseCount) {
     }
 }
 
-function startRace(horses, app) {
-    console.log('Race starting...', horses);
+function startRace(app) {
     isRaceStarted = true;
     socket.emit('race start');
-    const raceBtn = document.getElementById('race-btn');
-    raceBtn.disabled = true;
     
-    // Remove previous game loop if it exists
-    if (currentGameLoop) {
-        app.ticker.remove(currentGameLoop);
-    }
+    socket.on('race start allowed', data => {
+        let remoteHorses = data.horses;
+        console.log('Race starting...', remoteHorses);
     
-    const finishLine = app.screen.width - 300;
-    let finishedHorses = [];  // Track finished horses instead of single winner
-    let lastTime = performance.now();
-    
-    // Initialize horses with race-specific properties
-    horses.forEach(horse => {
-        // Initialize counts if they don't exist
-        if (typeof horse.stimCount === 'undefined') horse.stimCount = 0;
-        if (typeof horse.sabotageCount === 'undefined') horse.sabotageCount = 0;
+        const raceBtn = document.getElementById('race-btn');
+        raceBtn.disabled = true;
         
-        horse.baseSpeed = Math.random() * 1 + 0.5;
-        horse.timer = 0;
-        // Adjust multiplier based on stims and sabotages
-        horse.speedMultiplier = Math.max(0.2, 1 + (horse.stimCount * 0.2) - (horse.sabotageCount * 0.15));
-        horse.speed = horse.baseSpeed * horse.speedMultiplier;
-        horse.progressRatio = 0;
-        horse.visible = true;
-        
-        console.log(`Initializing horse ${horse.name}:`, {
-            stimCount: horse.stimCount,
-            baseSpeed: horse.baseSpeed,
-            multiplier: horse.speedMultiplier,
-            speed: horse.speed
-        });
-    });
-    
-    currentGameLoop = (delta) => {
-        const currentTime = performance.now();
-        const deltaTime = (currentTime - lastTime) / 1000;
-        lastTime = currentTime;
-        
-        let allFinished = true;  // Check if all horses have finished
-        
-        horses.forEach((horse, index) => {
-            if (horse.x >= finishLine) {
-                if (!finishedHorses.includes(horse)) {
-                    finishedHorses.push(horse);
-                }
-                return;  // Skip movement for finished horses
-            }
-            
-            allFinished = false;  // At least one horse hasn't finished
-            
-            // Update timer and progress
-            horse.timer += deltaTime;
-            horse.progressRatio = (horse.x - 50) / (finishLine - 50); // 0 to 1 progress
-            
-            // Calculate and apply speed
-            horse.speed = calculateHorseSpeed(horse);
-            horse.x += horse.speed * deltaTime * 60; // Scale for 60fps equivalent
-            
-            // Add rotation wobble based on speed
-            const maxRotation = 3 * (Math.PI / 180);
-            horse.rotation = Math.sin(horse.timer * 10) * maxRotation * (horse.speed / horse.baseSpeed);
-            
-            // Update speed indicator with behavior
-            horse.speedText.text = `${horse.behavior}: ${horse.speed.toFixed(1)}`;
-            horse.speedText.x = horse.x + horse.width + 10;
-            
-            // Log position every 60 frames for the first horse
-            if (index === 0 && Math.floor(app.ticker.lastTime) % 60 === 0) {
-                console.log(`Horse 0 position: ${horse.x}`);
-            }
-            
-            if (horse.x >= finishLine) {
-                console.log(`Horse #${index + 1} finished!`);
-            }
-        });
-        
-        // Check if all horses except one have finished
-        if (finishedHorses.length >= horses.length - 1) {
-            console.log('All horses except one have finished!');
-            determineWinner(finishedHorses);
-            raceBtn.disabled = false;
-            resetRace(horses);
+        // Remove previous game loop if it exists
+        if (currentGameLoop) {
             app.ticker.remove(currentGameLoop);
         }
-    };
-    
-    console.log('Adding ticker...');
-    app.ticker.add(currentGameLoop);
+        
+        const finishLine = app.screen.width - 300;
+        let finishedHorses = [];  // Track finished horses instead of single winner
+        let lastTime = performance.now();
+
+        // Initialize horses with race-specific properties
+        activeHorses.forEach(horse => {
+            let remoteHorse = remoteHorses.filter(x => x.name == horse.name)[0];
+            if (remoteHorse) {
+                // Initialize counts if they don't exist
+                horse.stimCount = remoteHorse.stimCount;
+                horse.sabotageCount = remoteHorse.sabotageCount;
+                
+                // race to race variation
+                horse.baseSpeed = Math.random() * 1 + 0.5;
+                horse.timer = 0;
+                // Adjust multiplier based on stims and sabotages
+                horse.speedMultiplier = Math.max(0.2, 1 + (horse.stimCount * 0.2) - (horse.sabotageCount * 0.15));
+                horse.speed = horse.baseSpeed * horse.speedMultiplier;
+                horse.progressRatio = 0;
+                horse.visible = true;
+                
+                console.log(`Initializing horse ${horse.name}:`, {
+                    stimCount: horse.stimCount,
+                    baseSpeed: horse.baseSpeed,
+                    multiplier: horse.speedMultiplier,
+                    speed: horse.speed
+                });
+            }
+        });
+        
+        currentGameLoop = (delta) => {
+            const currentTime = performance.now();
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            let allFinished = true;  // Check if all horses have finished
+            
+            activeHorses.forEach((horse, index) => {
+                if (horse.x >= finishLine) {
+                    if (!finishedHorses.includes(horse)) {
+                        finishedHorses.push(horse);
+                    }
+                    return;  // Skip movement for finished horses
+                }
+                
+                allFinished = false;  // At least one horse hasn't finished
+                
+                // Update timer and progress
+                horse.timer += deltaTime;
+                horse.progressRatio = (horse.x - 50) / (finishLine - 50); // 0 to 1 progress
+                
+                // Calculate and apply speed
+                horse.speed = calculateHorseSpeed(horse);
+                horse.x += horse.speed * deltaTime * 60; // Scale for 60fps equivalent
+                
+                // Add rotation wobble based on speed
+                const maxRotation = 3 * (Math.PI / 180);
+                horse.rotation = Math.sin(horse.timer * 10) * maxRotation * (horse.speed / horse.baseSpeed);
+                
+                // Update speed indicator with behavior
+                horse.speedText.text = `${horse.behavior}: ${horse.speed.toFixed(1)}`;
+                horse.speedText.x = horse.x + horse.width + 10;
+                
+                // Log position every 60 frames for the first horse
+                if (index === 0 && Math.floor(app.ticker.lastTime) % 60 === 0) {
+                    console.log(`Horse 0 position: ${horse.x}`);
+                }
+                
+                if (horse.x >= finishLine) {
+                    console.log(`Horse #${index + 1} finished!`);
+                }
+            });
+            
+            // Check if all horses except one have finished
+            if (finishedHorses.length >= activeHorses.length - 1) {
+                console.log('All horses except one have finished!');
+                determineWinner(finishedHorses);
+                raceBtn.disabled = false;
+
+                activeHorses.forEach(horse => {
+                    updateHorseText(horse);
+                });
+
+                app.ticker.remove(currentGameLoop);
+            }
+        };
+        
+        console.log('Adding ticker...');
+        app.ticker.add(currentGameLoop);
+    });
 }
 
 function determineWinner(finishedHorses) {
@@ -375,21 +405,6 @@ function checkForDQ(horse) {
     return Math.random() < dqChance;
 }
 
-function resetRace(horses) {
-    console.log('Resetting race...');
-    isRaceStarted = false; // Reset race state
-    horses.forEach(horse => {
-        horse.x = 50;
-        horse.speedText.x = horse.x + horse.width + 10;
-        horse.speed = 0;
-        horse.visible = true;
-        horse.speedText.text = 'Speed: 0';
-        horse.stimCount = 0; // Reset stim count
-        horse.sabotageCount = 0; // Reset sabotage count
-        horse.speedMultiplier = 1;
-        updateHorseText(horse);
-    });
-}
 
 export function displayText(buttonText) {
     actionText.text = buttonText;
@@ -405,50 +420,4 @@ function updateHorseText(horse) {
     if (horse.speedText) {
         horse.speedText.text = `${horse.name} - Speed: ${horse.speed?.toFixed(1) || 0} (Stims: ${horse.stimCount || 0}, Sabotages: ${horse.sabotageCount || 0})`;
     }
-}
-
-export function stim(horseName) {
-    if (isRaceStarted) {
-        console.log('Cannot stim after race has started');
-        return;
-    }
-
-    const horse = activeHorses.find(h => h.name === horseName);
-    if (!horse) {
-        console.error('Horse not found for stim:', horseName);
-        return;
-    }
-
-    // Initialize stimCount if it doesn't exist
-    if (typeof horse.stimCount !== 'number') {
-        horse.stimCount = 0;
-    }
-
-    // Increment stim count
-    horse.stimCount++;
-    updateHorseText(horse);
-    console.log(`Stimulating horse ${horse.name}. New stim count: ${horse.stimCount}`);
-}
-
-export function sabotage(horseName) {
-    if (isRaceStarted) {
-        console.log('Cannot sabotage after race has started');
-        return;
-    }
-
-    const horse = activeHorses.find(h => h.name === horseName);
-    if (!horse) {
-        console.error('Horse not found for sabotage:', horseName);
-        return;
-    }
-
-    // Initialize sabotageCount if it doesn't exist
-    if (typeof horse.sabotageCount !== 'number') {
-        horse.sabotageCount = 0;
-    }
-
-    // Increment sabotage count
-    horse.sabotageCount++;
-    updateHorseText(horse);
-    console.log(`Sabotageulating horse ${horse.name}. New sabotage count: ${horse.sabotageCount}`);
 }

@@ -32,7 +32,7 @@
     </style>
   </head>
   <body>
-    <button id="home-btn" class="button">Home</button>
+    <!-- <button id="home-btn" class="button">Home</button> -->
     <div id="race-controls" class="hidden">
       <button id="race-btn" class="button">Race!</button>
     </div>
@@ -51,10 +51,10 @@
       const playerCount = parseInt(params.get('players')) || 4;
       setupRace(app, playerCount);
 
-      //Routers
-      document.getElementById('home-btn').addEventListener('click', () => {
-        window.location.href = '/';
-      });
+      // //Routers
+      // document.getElementById('home-btn').addEventListener('click', () => {
+      //   window.location.href = '/';
+      // });
       
     </script>
   </body>

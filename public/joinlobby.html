@@ -151,10 +151,15 @@
 
     <div id="set-up">
       <button id="home-btn" class="button">Home</button>
-      <!-- name -->
-      <!-- <input type="text"> -->
-      <!-- bet value -->
-      <!-- horse to bet on -->
+      
+      <div class="lobby-buttons">
+        <div id="action-text">
+          <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
+          <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
+          <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
+        </div>
+        <div id="horse-buttons" style="display: none;"></div>
+      </div>
     </div>
     
     <div id="in-race">
@@ -166,14 +171,6 @@
       <div id="results"></div>
     </div>
 
-    <div class="lobby-buttons">
-      <div id="action-text">
-        <img src="/public/menus/stim.png" class="action-image" data-action="Stim" alt="Stim">
-        <img src="/public/menus/sabotage.png" class="action-image" data-action="Sabotage" alt="Sabotage">
-        <img src="/public/menus/cheat.png" class="action-image" data-action="Action 3" alt="Action 3">
-      </div>
-      <div id="horse-buttons" style="display: none;"></div>
-    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const SET_UP = 'set up';
@@ -253,7 +250,7 @@
         });
       });
 
-      socket.on('race start', () => {
+      socket.on('race start allowed', (data) => {
         raceInProgress = true;
         toggleActionButtons();
       });
