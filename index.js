@@ -8,6 +8,7 @@ import { Server } from 'socket.io';
 import { v4 } from 'uuid';
 import User from './public/models/User.js';
 import Lobby from './public/models/Lobby.js';
+
 // import { simulate } from './public/scripts/simulation.js';
 // simulate();
 
@@ -86,125 +87,134 @@ app.get('/', (req, res) => {
 app.use('/public', express.static('public'));
 app.use('/', express.static('public')); // Add this line to serve files from root path
 app.use('/public/scripts', express.static('src/scripts'));
-io.on('connection', (socket) => {
-  let myUser = TryGetMyUser(socket.user_id);
-  console.log('New socket connected with token:', myUser.id, myUser.name);
 
-  socket.join(myUser.id);
-  // Send initial lobby status to new connections
-  socket.emit('lobby status', lobby != undefined);
-  socket.to('lobby').emit('race status', myUser, lobby);
-  socket.on('create lobby', () => {
-    console.log(`create lobby - isLobbyActive:${lobby} - user_id:${myUser.id}`);
-    if (!lobby && myUser.IsValid()) {
-      lobby = new Lobby(myUser);
-      console.log(lobby);
-      socket.join('host');
-      socket.emit('feedback', `Lobby created`);
-    }
-    io.emit('lobby status', lobby != undefined);
-  });
-  socket.on('close lobby', () => {
-    console.log(`close lobby - isLobbyActive:${lobby} - user_id:${socket.user_id}`);
-    if (lobby && lobby.IsTheHost(myUser)) {
-      lobby = undefined;
-      socket.leave('host');
-      socket.emit('feedback', 'Lobby closed');
-    }
+
+try {
+  io.on('connection', (socket) => {
+    let myUser = TryGetMyUser(socket.user_id);
+    console.log('New socket connected with token:', myUser.id, myUser.name);
+
+    socket.join(myUser.id);
+    // Send initial lobby status to new connections
     socket.emit('lobby status', lobby != undefined);
-  });
-
-  socket.on('disconnect', () => {
-    // console.log(`user disconnected - user_id:${socket.user_id}`);
-  });
-  socket.on('join lobby', () => {
-    console.log(`Player joining lobby - user_id:${myUser.id}`);
-    console.log(lobby);
-    if (lobby) {
-      if (lobby.ParticiapantTriesToJoin(myUser)) {
-        socket.join('lobby');
-        io.emit('feedback', `Lobby joined ${myUser.id}`);
-        return;
-      }
-      io.emit('feedback', `Already in lobby ${myUser.id}`);
-    }
-  });
-  socket.on('leave lobby', () => {
-    console.log(`leave lobby - user_id:${socket.user_id}`);
-    socket.leave('lobby');
-    if (lobby) {
-      delete lobby.participants[myUser.id];
-    }
-  });
-  socket.on('button pressed', (buttonText) => {
-    console.log(`Button pressed - user_id:${socket.user_id}`);
-    // io.emit('display text', buttonText);
-  });
-  socket.on('race setup', (data) => {
-    console.log('Race setup received:', data);
-    lobby.status = Lobby.SET_UP;
-    lobby.horses = data.horses;
-    lobby.isRestrictedMode = data.restrictedMode;
-    console.log('Restricted mode set to:', restrictedMode);
-  });
-  socket.on('race start', () => {
-    console.log('Race starting from server');
-    if (lobby) {
-      if (lobby.StartRace(myUser)) {
-        console.log('emit race start allowed');
-        // Broadcast race start to all connected clients
-        io.emit('race start allowed', { horses: lobby.horses });
-      }
-    }
-  });
-  socket.on('race end', () => {
-    console.log('Race ended');
-    lobby.EndRace(myUser);
-    io.emit('race end');
-  });
-  socket.on('reset race', () => {
-    console.log('reseting race');
-    lobby.resetRace(myUser);
-  });
-  socket.on('add coins', (amount) => {
-    myUser.coins += amount;
-    io.to('lobby').emit('race status', myUser, lobby);
-  });
-  socket.on('action selected', (args) => {
-    if (lobby && args.horse && args.action) {
-      if (lobby.ParticiapantTriesToUseAction(myUser, args.horse, args.action)) {
-        io.emit('race update', { horses: lobby.horses });
-      } else {
-        socket.emit('show banner', 'You cannot do that, peasant.');
-      }
-    }
-  });
-  socket.on('broadcast race update', () => {
-    console.log('Broadcasting race update to all clients:');
-    // Broadcast to all connected clients including sender
     socket.to('lobby').emit('race status', myUser, lobby);
-  });
-
-  socket.on('request lobby redirect', () => {
-    if (lobby) {
-      console.log(lobby.participants);
-      if (lobby.IsTheHost(myUser)) {
-        socket.emit('redirect to lobby', '/public/game.html');
-      } else if (lobby.IsAParticipant(myUser)) {
-        socket.emit('redirect to lobby', '/public/joinlobby.html');
+    socket.on('create lobby', () => {
+      console.log(`create lobby - isLobbyActive:${lobby} - user_id:${myUser.id}`);
+      if (!lobby && myUser.IsValid()) {
+        lobby = new Lobby(myUser);
+        console.log(lobby);
+        socket.join('host');
+        socket.emit('feedback', `Lobby created`);
       }
-    }
-  });
-
-  socket.on('request race status', () => {
-    console.log(`Request race status`);
-    if (lobby) {
-      if (lobby.IsTheHost(myUser) || lobby.IsAParticipant(myUser)) {
-        socket.emit('race status', myUser, lobby);
+      io.emit('lobby status', lobby != undefined);
+    });
+    socket.on('close lobby', () => {
+      console.log(`close lobby - isLobbyActive:${lobby} - user_id:${socket.user_id}`);
+      if (lobby && lobby.IsTheHost(myUser)) {
+        lobby = undefined;
+        socket.leave('host');
+        socket.emit('feedback', 'Lobby closed');
       }
-    }
+      socket.emit('lobby status', lobby != undefined);
+    });
+
+    socket.on('disconnect', () => {
+      // console.log(`user disconnected - user_id:${socket.user_id}`);
+    });
+    socket.on('join lobby', () => {
+      console.log(`Player joining lobby - user_id:${myUser.id}`);
+      console.log(lobby);
+      if (lobby) {
+        if (lobby.ParticiapantTriesToJoin(myUser)) {
+          socket.join('lobby');
+          io.emit('feedback', `Lobby joined ${myUser.id}`);
+          return;
+        }
+        io.emit('feedback', `Already in lobby ${myUser.id}`);
+      }
+    });
+    socket.on('leave lobby', () => {
+      console.log(`leave lobby - user_id:${socket.user_id}`);
+      socket.leave('lobby');
+      if (lobby) {
+        delete lobby.participants[myUser.id];
+      }
+    });
+    socket.on('button pressed', (buttonText) => {
+      console.log(`Button pressed - user_id:${socket.user_id}`);
+      // io.emit('display text', buttonText);
+    });
+    socket.on('race setup', (data) => {
+      console.log('Race setup received:', data);
+      lobby.status = Lobby.SET_UP;
+      lobby.horses = data.horses;
+      lobby.isRestrictedMode = data.restrictedMode;
+      console.log('Restricted mode set to:', restrictedMode);
+    });
+    socket.on('race start', () => {
+      console.log('Race starting from server');
+      if (lobby) {
+        if (lobby.StartRace(myUser)) {
+          console.log('emit race start allowed');
+          // Broadcast race start to all connected clients
+          io.emit('race start allowed', { horses: lobby.horses });
+        }
+      }
+    });
+    socket.on('race end', () => {
+      console.log('Race ended');
+      lobby.EndRace(myUser);
+      io.emit('race end');
+    });
+    socket.on('reset race', () => {
+      console.log('reseting race');
+      lobby.resetRace(myUser);
+      io.emit('force refresh parti');
+    });
+    socket.on('add coins', (amount) => {
+      myUser.coins += amount;
+      io.to('lobby').emit('race status', myUser, lobby);
+    });
+    socket.on('action selected', (args) => {
+      if (lobby && args.horse && args.action) {
+        if (lobby.ParticiapantTriesToUseAction(myUser, args.horse, args.action)) {
+          io.emit('race update', { horses: lobby.horses });
+        } else {
+          socket.emit('show banner', 'You cannot do that, peasant.');
+        }
+      }
+    });
+    socket.on('broadcast race update', () => {
+      console.log('Broadcasting race update to all clients:');
+      // Broadcast to all connected clients including sender
+      socket.to('lobby').emit('race status', myUser, lobby);
+    });
+
+    socket.on('request lobby redirect', () => {
+      if (lobby) {
+        console.log(lobby.participants);
+        if (lobby.IsTheHost(myUser)) {
+          socket.emit('redirect to lobby', '/public/game.html');
+        } else if (lobby.IsAParticipant(myUser)) {
+          socket.emit('redirect to lobby', '/public/joinlobby.html');
+        }
+      }
+    });
+
+    socket.on('request race status', () => {
+      console.log(`Request race status`);
+      if (lobby) {
+        if (lobby.IsTheHost(myUser) || lobby.IsAParticipant(myUser)) {
+          socket.emit('race status', myUser, lobby);
+        }
+      }
+    });
   });
-});
+} catch (error) {
+  console.log('Ruh roh !');
+  lobby = undefined;
+  io.emit('force refresh');
+}
 server.listen(3000, () => {
   console.log('server running at http://localhost:3000');
 });
@@ -214,3 +224,5 @@ function TryGetMyUser(user_id) {
     return user
   return new User(-1);
 }
+
+/* */

@@ -202,11 +202,17 @@
         socket.emit("request race status");
       });
 
+      socket.on('force refresh parti', () => {
+        console.log('forced to refresh');
+        window.location.href = '/';
+      });
+
       socket.on('race status', (newUser, newLobby) => {
         myUser = newUser;
         lobby = newLobby;
         const status = lobby.status;
 
+        console.log(myUser)
         coinAmountDisplay.innerHTML = myUser.coins;
 
         setUpSection.classList.add('hidden');
@@ -252,12 +258,12 @@
 
       socket.on('race start allowed', (data) => {
         raceInProgress = true;
-        toggleActionButtons();
+        // toggleActionButtons();
       });
 
       socket.on('race end', () => {
         raceInProgress = false;
-        toggleActionButtons();
+        // toggleActionButtons();
       });
 
       socket.on('show banner', (message) => {

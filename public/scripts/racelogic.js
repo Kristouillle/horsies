@@ -26,6 +26,10 @@ export async function setupRace(pixiApp, horseCount) {
         displayText(buttonText);
     });
     
+    socket.on('force refresh', () => {
+        window.location.href = '/';
+    });
+
     // Add socket handlers first
     socket.on('race update', (data) => {
         console.log('race update', data)

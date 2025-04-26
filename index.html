@@ -88,9 +88,26 @@
         height: 20px;
         vertical-align: middle;
       }
+      
+      #banner {
+        position: fixed;
+        top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 50px;
+        display: none; /* Start hidden */
+        z-index: 1000;
+      }
     </style>
   </head>
   <body>
+    
+    <div id="banner"></div>
+
     <div id="lobby-buttons" class="lobby-buttons">
       <img id="create-lobby" src="/public/menus/createlobby.png" class="lobby-button-img" alt="Create Lobby">
       <img id="join-lobby" src="/public/menus/joinlobby.png" class="lobby-button-img" alt="Join Lobby">
@@ -109,6 +126,20 @@
         if (destination)
           window.location.href = destination;
       });
+
+      const banner = document.getElementById('banner');
+      socket.on('show banner', (message) => {
+        showBanner(message);
+      });
+
+      function showBanner(message) {
+        banner.textContent = message;
+        banner.style.display = 'block';
+
+        setTimeout(() => {
+          banner.style.display = 'none';
+        }, 2000); // 2000 milliseconds = 2 seconds
+      }
 
       // socket.on('feedback', (message) => {
       //   alert(message);
